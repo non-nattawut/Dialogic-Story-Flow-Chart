@@ -11,6 +11,20 @@ static func create_empty_dtl(dtl_path: String) -> void:
 			print("Created clean empty DTL timeline file: ", dtl_path)
 			force_reload_resource(dtl_path)
 
+static func save_open_editor_if_needed(path: String) -> void:
+	if not Engine.is_editor_hint() or path.is_empty():
+		return
+	var main_screen: Node = EditorInterface.get_editor_main_screen()
+	var dialogic_plugin: Node = main_screen.get_node_or_null("Dialogic")
+	if dialogic_plugin != null:
+		var editors_manager: Node = dialogic_plugin.find_child("EditorsManager", true, false)
+		if editors_manager != null and "current_editor" in editors_manager and editors_manager.current_editor != null:
+			var editor: Node = editors_manager.current_editor
+			if "current_resource" in editor and editor.current_resource != null:
+				if editor.current_resource.resource_path == path:
+					if editor.has_method("_save"):
+						editor._save()
+
 static func force_reload_resource(path: String) -> void:
 	if path.is_empty() or not FileAccess.file_exists(path):
 		return
@@ -78,6 +92,8 @@ static func inject_jump(source_dtl_path: String, target_timeline_name: String) -
 	if not FileAccess.file_exists(source_dtl_path):
 		return
 
+	save_open_editor_if_needed(source_dtl_path)
+
 	var file: FileAccess = FileAccess.open(source_dtl_path, FileAccess.READ)
 	if file == null:
 		return
@@ -108,6 +124,8 @@ static func remove_jump(source_dtl_path: String, target_timeline_name: String) -
 		return
 	if not FileAccess.file_exists(source_dtl_path):
 		return
+
+	save_open_editor_if_needed(source_dtl_path)
 
 	var file: FileAccess = FileAccess.open(source_dtl_path, FileAccess.READ)
 	if file == null:

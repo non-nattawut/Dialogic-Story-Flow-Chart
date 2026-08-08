@@ -1,0 +1,10 @@
+<Empty Text Event>
+- 
+	if :
+		join  center
+join  center
+join  center
+join  center
+[wait_input]
+if :
+jump test2/
