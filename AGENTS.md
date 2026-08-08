@@ -25,7 +25,7 @@
 > **Rule: Senior Game Developer OOP & Architecture Standards**
 > AI Agents MUST design and structure code adhering to professional Senior Game Developer standards:
 > 1. **OOP & Inheritance**: Utilize proper Object-Oriented Programming (OOP), encapsulation, modular static helpers, and inheritance.
-> 2. **Modular Architecture & File Size Limit (Max 250-300 Lines)**: Avoid monolithic scripts. Separate UI controllers, file I/O managers, and inspector models into distinct, modular scripts. Keep code files concise and under ~250-300 lines.
+> 2. **Modular Architecture & Clean Directories**: Avoid monolithic scripts or flat directory dumps. Organize code into clean subdirectories (`core/`, `ui/`). Keep code files concise and under ~250-300 lines.
 
 > [!IMPORTANT]
 > **Rule: Maintain & Keep AGENTS.md in Sync**
@@ -52,9 +52,17 @@ dialogic-story-flow-chart/
 ├── addons/
 │   ├── dialogic/        # Dialogic plugin framework
 │   └── dialogic_flow_chart/ # Flow Chart Editor Addon
-│       ├── flow_chart_editor.gd            # Main UI Controller
-│       ├── flow_chart_file_manager.gd       # File I/O & Jump Manager
-│       └── flow_chart_inspector_manager.gd  # Node Inspector UI Manager
+│       ├── core/        # Core Data Models & File I/O Managers
+│       │   ├── flow_chart_file_manager.gd
+│       │   ├── flow_chart_node_data.gd
+│       │   └── flow_chart_resource.gd
+│       ├── ui/          # UI Controllers, Views & Inspectors
+│       │   ├── flow_chart_editor.gd
+│       │   ├── flow_chart_editor.tscn
+│       │   ├── flow_chart_graph_edit.gd
+│       │   └── flow_chart_inspector_manager.gd
+│       ├── plugin.cfg   # Plugin configuration metadata
+│       └── plugin.gd    # Addon entry point script
 ├── project.godot        # Godot project file
 ├── .gitignore           # Git ignore rules for Godot 4+
 ├── AGENTS.md            # Agent instructions & synchronization rules (this file)

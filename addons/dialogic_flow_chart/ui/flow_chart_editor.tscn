@@ -1,7 +1,7 @@
 [gd_scene load_steps=3 format=3 uid="uid://cflowcharteditor01"]
 
-[ext_resource type="Script" path="res://addons/dialogic_flow_chart/flow_chart_editor.gd" id="1_editor"]
-[ext_resource type="Script" path="res://addons/dialogic_flow_chart/flow_chart_graph_edit.gd" id="2_graph_edit"]
+[ext_resource type="Script" path="res://addons/dialogic_flow_chart/ui/flow_chart_editor.gd" id="1_editor"]
+[ext_resource type="Script" path="res://addons/dialogic_flow_chart/ui/flow_chart_graph_edit.gd" id="2_graph_edit"]
 
 [node name="FlowChartEditor" type="Control"]
 layout_mode = 3
