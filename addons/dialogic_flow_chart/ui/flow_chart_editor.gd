@@ -89,6 +89,7 @@ func _handle_file_dropped(at_position: Vector2, dtl_path: String) -> void:
 	if graph_edit != null:
 		graph_pos = (at_position + graph_edit.scroll_offset) / graph_edit.zoom
 	node.position = graph_pos
+	node.size = Vector2(260, 140)
 
 	current_flow_chart.add_node(node)
 	_save_current_chart_silent()
@@ -137,6 +138,7 @@ func _do_new_chart() -> void:
 	start_node.title = "Start Scene"
 	start_node.timeline_path = "res://example/timelines/start.dtl"
 	start_node.position = Vector2(80, 140)
+	start_node.size = Vector2(260, 140)
 	current_flow_chart.add_node(start_node)
 
 	current_resource_path = "res://example/new_flowchart.tres"
@@ -217,6 +219,7 @@ func _create_and_bind_new_dtl(dtl_path: String) -> void:
 	node.title = base_name.capitalize()
 	node.timeline_path = dtl_path
 	node.position = Vector2(300, 140)
+	node.size = Vector2(260, 140)
 	current_flow_chart.add_node(node)
 	_save_current_chart_silent()
 	_refresh_graph()
@@ -253,6 +256,7 @@ func _sync_node_positions_from_graph() -> void:
 			var node_data: FlowChartNodeData = current_flow_chart.get_node_by_id(child.name)
 			if node_data != null:
 				node_data.position = child.position_offset
+				node_data.size = child.size
 
 func _refresh_graph() -> void:
 	if graph_edit == null or current_flow_chart == null:
@@ -274,8 +278,18 @@ func _refresh_graph() -> void:
 			gnode.name = node_data.node_id
 			gnode.title = node_data.title
 			gnode.position_offset = node_data.position
-			gnode.custom_minimum_size = Vector2(240, 70)
-			gnode.resizable = false
+			if node_data.size != Vector2.ZERO:
+				gnode.size = node_data.size
+			gnode.custom_minimum_size = Vector2(260, 140)
+			gnode.resizable = true
+
+			gnode.resize_request.connect(func(new_size: Vector2):
+				gnode.size = new_size
+				var data: FlowChartNodeData = current_flow_chart.get_node_by_id(gnode.name)
+				if data != null:
+					data.size = new_size
+					_save_current_chart_silent()
+			)
 
 			var header_hbox: HBoxContainer = HBoxContainer.new()
 			header_hbox.name = "HeaderHBox"
@@ -306,6 +320,9 @@ func _refresh_graph() -> void:
 		else:
 			gnode.title = node_data.title
 			gnode.position_offset = node_data.position
+			if node_data.size != Vector2.ZERO:
+				gnode.size = node_data.size
+			gnode.resizable = true
 			var lbl: Label = gnode.get_node_or_null("HeaderHBox/PathLabel") as Label
 			if lbl != null:
 				lbl.text = node_data.timeline_path.get_file() if not node_data.timeline_path.is_empty() else "(No DTL File)"
@@ -319,7 +336,7 @@ func _refresh_graph() -> void:
 				gnode.remove_child(child)
 				child.queue_free()
 
-		# Build choice slots with inline LineEdit and Delete button
+		# Build choice slots with styled LineEdit input field and Delete button
 		for c_idx in range(choices.size()):
 			var choice_info: Dictionary = choices[c_idx]
 			var c_text: String = choice_info.get("text", "")
@@ -335,9 +352,9 @@ func _refresh_graph() -> void:
 			var line_edit: LineEdit = LineEdit.new()
 			line_edit.name = "ChoiceEdit"
 			line_edit.text = c_text
-			line_edit.placeholder_text = "Choice text..."
+			line_edit.placeholder_text = "Choice option..."
 			line_edit.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-			line_edit.flat = true
+			line_edit.flat = false # Display clean input field box outline
 			
 			var dtl_p: String = node_data.timeline_path
 			var old_t: String = c_text

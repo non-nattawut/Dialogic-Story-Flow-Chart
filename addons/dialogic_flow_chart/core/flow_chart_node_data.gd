@@ -5,6 +5,7 @@ extends Resource
 @export var node_id: String = ""
 @export var title: String = "Timeline Node"
 @export var position: Vector2 = Vector2.ZERO
+@export var size: Vector2 = Vector2(260, 140)
 @export var timeline_path: String = "" # e.g. "res://example/timelines/start.dtl"
 
 # Parsed Choices: Array of { "text": String, "target_node_id": String }

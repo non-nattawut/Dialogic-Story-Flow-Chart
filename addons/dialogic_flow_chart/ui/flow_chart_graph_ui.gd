@@ -90,6 +90,8 @@ func rebuild_graph() -> void:
 		gnode.name = node_data.node_id
 		gnode.title = node_data.title
 		gnode.position_offset = node_data.position
+		if node_data.size != Vector2.ZERO:
+			gnode.size = node_data.size
 		gnode.draggable = true
 		gnode.resizable = false
 		gnode.custom_minimum_size = Vector2(240, 70)
@@ -109,7 +111,6 @@ func rebuild_graph() -> void:
 			var choice_info: Dictionary = choices[c_idx]
 			var c_text: String = choice_info.get("text", "")
 			var c_label: Label = Label.new()
-			c_label.name = "ChoiceSlot_" + str(c_idx)
 			c_label.text = "- " + c_text
 			c_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
 			c_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
