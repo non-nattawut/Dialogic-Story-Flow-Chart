@@ -247,28 +247,37 @@ func _on_add_timeline_node() -> void:
 	if current_flow_chart == null:
 		_do_new_chart()
 
-	var time_stamp: String = str(Time.get_ticks_msec())
-	var new_id: String = "timeline_" + time_stamp
-	var dtl_dir: String = "res://example/timelines/"
-	
-	if not DirAccess.dir_exists_absolute(dtl_dir):
-		DirAccess.make_dir_recursive_absolute(dtl_dir)
-		
-	var dtl_path: String = dtl_dir + new_id + ".dtl"
-	
-	# Auto-create .dtl file on disk
-	var starter_content: String = "[background path=\"res://assets/background/Apartment_Exterior.png\" fade=\"1.0\"]\njoin hiyori center\nhiyori: New timeline scene beat.\n"
-	var file: FileAccess = FileAccess.open(dtl_path, FileAccess.WRITE)
-	if file != null:
-		file.store_string(starter_content)
-		file.close()
-		print("Auto-created DTL timeline file: ", dtl_path)
-		if Engine.is_editor_hint():
-			EditorInterface.get_resource_filesystem().scan()
+	if Engine.is_editor_hint():
+		var dtl_dialog: EditorFileDialog = EditorFileDialog.new()
+		dtl_dialog.file_mode = EditorFileDialog.FILE_MODE_SAVE_FILE
+		dtl_dialog.add_filter("*.dtl", "Dialogic Timeline File")
+		dtl_dialog.current_dir = "res://example/timelines/"
+		dtl_dialog.current_file = "new_timeline.dtl"
+		dtl_dialog.file_selected.connect(func(dtl_path: String):
+			_create_and_bind_new_dtl(dtl_path)
+			dtl_dialog.queue_free()
+		)
+		add_child(dtl_dialog)
+		dtl_dialog.popup_centered_ratio(0.6)
+	else:
+		var default_path: String = "res://example/timelines/timeline_" + str(Time.get_ticks_msec()) + ".dtl"
+		_create_and_bind_new_dtl(default_path)
 
+func _create_and_bind_new_dtl(dtl_path: String) -> void:
+	var starter_content: String = "[background path=\"res://assets/background/Apartment_Exterior.png\" fade=\"1.0\"]\njoin hiyori center\nhiyori: New timeline scene beat.\n"
+	if not FileAccess.file_exists(dtl_path):
+		var file: FileAccess = FileAccess.open(dtl_path, FileAccess.WRITE)
+		if file != null:
+			file.store_string(starter_content)
+			file.close()
+			print("Created new DTL timeline file: ", dtl_path)
+			if Engine.is_editor_hint():
+				EditorInterface.get_resource_filesystem().scan()
+
+	var base_name: String = dtl_path.get_file().get_basename()
 	var node: FlowChartNodeData = FlowChartNodeData.new()
-	node.node_id = new_id
-	node.title = new_id.capitalize()
+	node.node_id = base_name + "_" + str(Time.get_ticks_msec())
+	node.title = base_name.capitalize()
 	node.timeline_path = dtl_path
 	node.position = Vector2(300, 140)
 	current_flow_chart.add_node(node)

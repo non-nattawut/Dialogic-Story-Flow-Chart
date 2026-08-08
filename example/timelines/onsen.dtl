@@ -1,6 +1,7 @@
-[background path="res://assets/background/Onsen_Building.png" fade="1.0"]
-[music path="res://assets/bgm/beanfeast.ogg" fade="1.0"]
+[background fade="1.0"]
+audio music "res://assets/bgm/beanfeast.ogg" [fade="1.0"]
 join aria left
 aria (Happy): Welcome to the Onsen building!
 aria (shy): Careful, the water is very hot today.
 jump futon_night
+jump timeline_502024
