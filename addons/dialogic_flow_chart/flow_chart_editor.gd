@@ -4,7 +4,6 @@ extends Control
 
 var current_flow_chart: FlowChartData
 var current_resource_path: String = "res://example/demo_flowchart.tres"
-var selected_node_data: FlowChartNodeData
 
 @onready var graph_edit: GraphEdit = $MainVBox/HSplitContainer/GraphEdit
 @onready var inspector_panel: VBoxContainer = $MainVBox/HSplitContainer/InspectorScroll/InspectorVBox
@@ -16,11 +15,7 @@ var selected_node_data: FlowChartNodeData
 @onready var btn_add_node: Button = $MainVBox/Toolbar/BtnAddNode
 @onready var current_file_label: Label = $MainVBox/Toolbar/CurrentFileLabel
 
-# Form Fields
-var title_field: LineEdit
-var timeline_path_field: LineEdit
-var default_next_field: LineEdit
-
+var inspector_manager: FlowChartInspectorManager
 var file_dialog: EditorFileDialog
 var confirm_dialog: ConfirmationDialog
 var pending_action: Callable
@@ -50,10 +45,10 @@ func _ready() -> void:
 		if graph_edit.has_signal("end_node_move"):
 			graph_edit.end_node_move.connect(_sync_node_positions_from_graph)
 
-	_build_inspector_fields()
+	inspector_manager = FlowChartInspectorManager.new()
+	inspector_manager.setup(inspector_panel, _refresh_graph, _save_current_chart_silent, _open_timeline_in_dialogic)
 	_setup_confirm_dialog()
 
-	# Auto-load existing demo flowchart
 	if FileAccess.file_exists(current_resource_path):
 		var res: FlowChartData = load(current_resource_path) as FlowChartData
 		if res != null:
@@ -75,23 +70,18 @@ func _can_drop_data(_at_position: Vector2, data: Variant) -> bool:
 func _drop_data(at_position: Vector2, data: Variant) -> void:
 	if _can_drop_data(at_position, data):
 		var files: PackedStringArray = data.get("files", [])
-		var dtl_path: String = files[0]
-		_handle_file_dropped(at_position, dtl_path)
+		_handle_file_dropped(at_position, files[0])
 
 func _handle_file_dropped(at_position: Vector2, dtl_path: String) -> void:
 	_sync_node_positions_from_graph()
 	if current_flow_chart == null:
 		_do_new_chart()
 
-	var time_stamp: String = str(Time.get_ticks_msec())
-	var new_id: String = "node_" + time_stamp
 	var node: FlowChartNodeData = FlowChartNodeData.new()
-	node.node_id = new_id
-	var file_name: String = dtl_path.get_file().get_basename()
-	node.title = file_name.capitalize()
+	node.node_id = "node_" + str(Time.get_ticks_msec())
+	node.title = dtl_path.get_file().get_basename().capitalize()
 	node.timeline_path = dtl_path
 	
-	# Calculate position in graph
 	var graph_pos: Vector2 = at_position
 	if graph_edit != null:
 		graph_pos = (at_position + graph_edit.scroll_offset) / graph_edit.zoom
@@ -100,16 +90,6 @@ func _handle_file_dropped(at_position: Vector2, dtl_path: String) -> void:
 	current_flow_chart.add_node(node)
 	_save_current_chart_silent()
 	_refresh_graph()
-
-func _bind_timeline_to_node(node_id: String, dtl_path: String) -> void:
-	if current_flow_chart == null:
-		return
-	var node_data: FlowChartNodeData = current_flow_chart.get_node_by_id(node_id)
-	if node_data != null:
-		node_data.timeline_path = dtl_path
-		node_data.title = dtl_path.get_file().get_basename().capitalize()
-		_save_current_chart_silent()
-		_refresh_graph()
 
 func _setup_confirm_dialog() -> void:
 	confirm_dialog = ConfirmationDialog.new()
@@ -137,51 +117,6 @@ func _confirm_unsaved_changes(action: Callable) -> void:
 	else:
 		action.call()
 
-func _build_inspector_fields() -> void:
-	if inspector_panel == null:
-		return
-
-	for child in inspector_panel.get_children():
-		child.queue_free()
-
-	var label_heading: Label = Label.new()
-	label_heading.text = "Timeline Node Inspector"
-	label_heading.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	inspector_panel.add_child(label_heading)
-
-	inspector_panel.add_child(HSeparator.new())
-
-	title_field = _add_field("Node Title:")
-	title_field.text_changed.connect(_on_title_changed)
-
-	timeline_path_field = _add_field("Dialogic Timeline (.dtl) Path:")
-	timeline_path_field.text_changed.connect(func(val):
-		if selected_node_data:
-			selected_node_data.timeline_path = val
-			_save_current_chart_silent()
-			_refresh_graph()
-	)
-
-	default_next_field = _add_field("Default Next Timeline ID:")
-	default_next_field.text_changed.connect(func(val):
-		if selected_node_data:
-			selected_node_data.default_next_node_id = val
-			_save_current_chart_silent()
-	)
-
-	var btn_open_dialogic: Button = Button.new()
-	btn_open_dialogic.text = "Open Timeline in Dialogic Editor"
-	btn_open_dialogic.pressed.connect(_on_open_timeline_file)
-	inspector_panel.add_child(btn_open_dialogic)
-
-func _add_field(title: String) -> LineEdit:
-	var lbl: Label = Label.new()
-	lbl.text = title
-	inspector_panel.add_child(lbl)
-	var line: LineEdit = LineEdit.new()
-	inspector_panel.add_child(line)
-	return line
-
 func load_flow_chart(chart: FlowChartData, path: String = "") -> void:
 	current_flow_chart = chart
 	if not path.is_empty():
@@ -206,19 +141,10 @@ func _do_new_chart() -> void:
 		current_file_label.text = "File: " + current_resource_path
 	_refresh_graph()
 
-func _force_reload_resource(path: String) -> void:
-	if path.is_empty() or not FileAccess.file_exists(path):
-		return
-	# Force Godot resource cache to replace stale in-memory cached resource with disk content
-	var _reloaded: Resource = ResourceLoader.load(path, "", ResourceLoader.CACHE_MODE_REPLACE)
-	if Engine.is_editor_hint():
-		EditorInterface.get_resource_filesystem().scan()
-
 func _save_current_chart_silent() -> void:
 	if current_flow_chart != null and not current_resource_path.is_empty():
 		_sync_node_positions_from_graph()
-		ResourceSaver.save(current_flow_chart, current_resource_path)
-		_force_reload_resource(current_resource_path)
+		FlowChartFileManager.save_flowchart_silent(current_flow_chart, current_resource_path)
 
 func _on_save_chart() -> void:
 	if current_flow_chart == null:
@@ -227,8 +153,7 @@ func _on_save_chart() -> void:
 	if current_resource_path.is_empty():
 		_on_save_as_file_dialog()
 		return
-	ResourceSaver.save(current_flow_chart, current_resource_path)
-	_force_reload_resource(current_resource_path)
+	FlowChartFileManager.save_flowchart_silent(current_flow_chart, current_resource_path)
 	print("Saved Flow Chart to: ", current_resource_path)
 	if current_file_label != null:
 		current_file_label.text = "File: " + current_resource_path
@@ -262,7 +187,6 @@ func _on_open_file_dialog() -> void:
 
 func _on_add_timeline_node() -> void:
 	_sync_node_positions_from_graph()
-
 	if current_flow_chart == null:
 		_do_new_chart()
 
@@ -283,14 +207,7 @@ func _on_add_timeline_node() -> void:
 		_create_and_bind_new_dtl(default_path)
 
 func _create_and_bind_new_dtl(dtl_path: String) -> void:
-	if not FileAccess.file_exists(dtl_path):
-		var file: FileAccess = FileAccess.open(dtl_path, FileAccess.WRITE)
-		if file != null:
-			file.store_string("")
-			file.close()
-			print("Created clean empty DTL timeline file: ", dtl_path)
-			_force_reload_resource(dtl_path)
-
+	FlowChartFileManager.create_empty_dtl(dtl_path)
 	var base_name: String = dtl_path.get_file().get_basename()
 	var node: FlowChartNodeData = FlowChartNodeData.new()
 	node.node_id = base_name + "_" + str(Time.get_ticks_msec())
@@ -303,7 +220,6 @@ func _create_and_bind_new_dtl(dtl_path: String) -> void:
 
 func _on_delete_nodes_request(node_names: Array) -> void:
 	_sync_node_positions_from_graph()
-
 	if current_flow_chart == null:
 		return
 
@@ -314,11 +230,11 @@ func _on_delete_nodes_request(node_names: Array) -> void:
 			var target_name: String = deleted_node.get_timeline_name()
 			for n: FlowChartNodeData in current_flow_chart.nodes:
 				if n.default_next_node_id == id_str:
-					_remove_jump_from_timeline(n.timeline_path, target_name)
+					FlowChartFileManager.remove_jump(n.timeline_path, target_name)
 					n.default_next_node_id = ""
 				for choice: Dictionary in n.choices:
 					if choice.get("target_node_id", "") == id_str:
-						_remove_jump_from_timeline(n.timeline_path, target_name)
+						FlowChartFileManager.remove_jump(n.timeline_path, target_name)
 
 			current_flow_chart.remove_node_by_id(id_str)
 
@@ -340,13 +256,11 @@ func _refresh_graph() -> void:
 
 	_sync_node_positions_from_graph()
 
-	# 1. Remove nodes no longer in current_flow_chart
 	for child in graph_edit.get_children():
 		if child is GraphNode:
 			if current_flow_chart.get_node_by_id(child.name) == null:
 				child.queue_free()
 
-	# 2. Add missing nodes or update existing ones
 	for node_data: FlowChartNodeData in current_flow_chart.nodes:
 		var gnode: GraphNode = graph_edit.get_node_or_null(node_data.node_id) as GraphNode
 		if gnode == null:
@@ -376,16 +290,13 @@ func _refresh_graph() -> void:
 
 			gnode.add_child(header_hbox)
 
-			# Double click on GraphNode to switch tab directly to Dialogic
 			gnode.gui_input.connect(func(event: InputEvent):
 				if event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT and event.double_click:
 					accept_event()
 					_open_timeline_in_dialogic(node_data.timeline_path)
 			)
 
-			# Slot 0: Input & Output
 			gnode.set_slot(0, true, 0, Color.WHITE, true, 0, Color.GREEN)
-
 			graph_edit.add_child(gnode)
 		else:
 			gnode.title = node_data.title
@@ -394,7 +305,6 @@ func _refresh_graph() -> void:
 			if lbl != null:
 				lbl.text = node_data.timeline_path.get_file() if not node_data.timeline_path.is_empty() else "(No DTL File)"
 
-	# Defer connection restoration by 1 frame
 	if is_inside_tree():
 		await get_tree().process_frame
 
@@ -411,29 +321,14 @@ func _refresh_graph() -> void:
 func _on_node_selected(node: Node) -> void:
 	if current_flow_chart == null:
 		return
-	selected_node_data = current_flow_chart.get_node_by_id(node.name)
-	if selected_node_data != null:
-		title_field.text = selected_node_data.title
-		timeline_path_field.text = selected_node_data.timeline_path
-		default_next_field.text = selected_node_data.default_next_node_id
-
-func _on_title_changed(new_title: String) -> void:
-	if selected_node_data != null:
-		selected_node_data.title = new_title
-		_save_current_chart_silent()
-		if graph_edit.has_node(selected_node_data.node_id):
-			var gnode: GraphNode = graph_edit.get_node(selected_node_data.node_id) as GraphNode
-			if gnode != null:
-				gnode.title = new_title
-
-func _on_open_timeline_file() -> void:
-	if selected_node_data != null and not selected_node_data.timeline_path.is_empty():
-		_open_timeline_in_dialogic(selected_node_data.timeline_path)
+	var selected: FlowChartNodeData = current_flow_chart.get_node_by_id(node.name)
+	if inspector_manager != null:
+		inspector_manager.select_node(selected)
 
 func _open_timeline_in_dialogic(dtl_path: String) -> void:
 	if dtl_path.is_empty() or not FileAccess.file_exists(dtl_path):
 		return
-	_force_reload_resource(dtl_path)
+	FlowChartFileManager.force_reload_resource(dtl_path)
 	var res: Resource = ResourceLoader.load(dtl_path, "", ResourceLoader.CACHE_MODE_REPLACE)
 	if res != null and Engine.is_editor_hint():
 		if is_inside_tree():
@@ -449,7 +344,7 @@ func _on_connection_request(from_node: StringName, from_port: int, to_node: Stri
 
 	if from_data != null and to_data != null:
 		from_data.default_next_node_id = String(to_node)
-		_inject_jump_to_timeline(from_data.timeline_path, to_data.get_timeline_name())
+		FlowChartFileManager.inject_jump(from_data.timeline_path, to_data.get_timeline_name())
 		_save_current_chart_silent()
 
 func _on_disconnection_request(from_node: StringName, from_port: int, to_node: StringName, to_port: int) -> void:
@@ -458,87 +353,9 @@ func _on_disconnection_request(from_node: StringName, from_port: int, to_node: S
 	var to_data: FlowChartNodeData = current_flow_chart.get_node_by_id(String(to_node))
 
 	if from_data != null and to_data != null:
-		_remove_jump_from_timeline(from_data.timeline_path, to_data.get_timeline_name())
+		FlowChartFileManager.remove_jump(from_data.timeline_path, to_data.get_timeline_name())
 
 	if from_data != null and from_data.default_next_node_id == String(to_node):
 		from_data.default_next_node_id = ""
 
 	_save_current_chart_silent()
-
-func _is_jump_to_target(line: String, target_timeline_name: String) -> bool:
-	var target_clean: String = target_timeline_name.get_file().trim_suffix(".dtl").strip_edges()
-	if target_clean.is_empty():
-		return false
-	var s: String = line.strip_edges()
-	if not s.begins_with("jump "):
-		return false
-	var dest: String = s.trim_prefix("jump ").strip_edges()
-	if dest.ends_with("/"):
-		dest = dest.trim_suffix("/").strip_edges()
-	elif "/" in dest and not dest.begins_with("res://"):
-		dest = dest.split("/")[0].strip_edges()
-	var dest_clean: String = dest.get_file().trim_suffix(".dtl").strip_edges()
-	return dest_clean == target_clean
-
-func _inject_jump_to_timeline(source_dtl_path: String, target_timeline_name: String) -> void:
-	var target_clean: String = target_timeline_name.get_file().trim_suffix(".dtl").strip_edges()
-	if source_dtl_path.is_empty() or target_clean.is_empty():
-		return
-	if not FileAccess.file_exists(source_dtl_path):
-		return
-
-	var file: FileAccess = FileAccess.open(source_dtl_path, FileAccess.READ)
-	if file == null:
-		return
-	var content: String = file.get_as_text()
-	file.close()
-
-	var has_jump: bool = false
-	for line: String in content.split("\n"):
-		if _is_jump_to_target(line, target_clean):
-			has_jump = true
-			break
-
-	if not has_jump:
-		content = content.strip_edges()
-		if not content.is_empty():
-			content += "\n"
-		content += "jump " + target_clean + "/\n"
-
-		var write_file: FileAccess = FileAccess.open(source_dtl_path, FileAccess.WRITE)
-		if write_file != null:
-			write_file.store_string(content)
-			write_file.close()
-			print("Injected jump into [", source_dtl_path, "]: jump ", target_clean, "/")
-			_force_reload_resource(source_dtl_path)
-
-func _remove_jump_from_timeline(source_dtl_path: String, target_timeline_name: String) -> void:
-	if source_dtl_path.is_empty() or target_timeline_name.is_empty():
-		return
-	if not FileAccess.file_exists(source_dtl_path):
-		return
-
-	var file: FileAccess = FileAccess.open(source_dtl_path, FileAccess.READ)
-	if file == null:
-		return
-	var content: String = file.get_as_text()
-	file.close()
-
-	var lines: PackedStringArray = content.split("\n")
-	var new_lines: Array = []
-	var modified: bool = false
-
-	for line: String in lines:
-		if _is_jump_to_target(line, target_timeline_name):
-			modified = true
-		else:
-			new_lines.append(line)
-
-	if modified:
-		var new_content: String = "\n".join(new_lines)
-		var write_file: FileAccess = FileAccess.open(source_dtl_path, FileAccess.WRITE)
-		if write_file != null:
-			write_file.store_string(new_content)
-			write_file.close()
-			print("Removed jump from [", source_dtl_path, "]: ", target_timeline_name)
-			_force_reload_resource(source_dtl_path)
