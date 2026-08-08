@@ -17,3 +17,16 @@ func get_timeline_name() -> String:
 	if not timeline_path.is_empty():
 		return timeline_path.get_file().trim_suffix(".dtl")
 	return node_id
+
+func set_choice_target(choice_text: String, target_id: String) -> void:
+	for choice in choices:
+		if choice.get("text", "") == choice_text:
+			choice["target_node_id"] = target_id
+			return
+	choices.append({ "text": choice_text, "target_node_id": target_id })
+
+func get_choice_target(choice_text: String) -> String:
+	for choice in choices:
+		if choice.get("text", "") == choice_text:
+			return choice.get("target_node_id", "")
+	return ""

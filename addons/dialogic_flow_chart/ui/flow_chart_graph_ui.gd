@@ -85,13 +85,14 @@ func rebuild_graph() -> void:
 			child.queue_free()
 
 	for node_data: FlowChartNodeData in flow_chart.nodes:
+		var choices: Array[Dictionary] = FlowChartFileManager.get_choices_from_dtl(node_data.timeline_path)
 		var gnode: GraphNode = GraphNode.new()
 		gnode.name = node_data.node_id
 		gnode.title = node_data.title
 		gnode.position_offset = node_data.position
 		gnode.draggable = true
 		gnode.resizable = false
-		gnode.size = Vector2(240, 140)
+		gnode.custom_minimum_size = Vector2(240, 70)
 
 		var v_box: VBoxContainer = VBoxContainer.new()
 		var desc_label: Label = Label.new()
@@ -101,16 +102,43 @@ func rebuild_graph() -> void:
 
 		gnode.add_child(v_box)
 		graph_edit.add_child(gnode)
-		gnode.set_slot(0, true, 0, Color.WHITE, true, 0, Color.WHITE)
+		gnode.set_slot(0, true, 0, Color.WHITE, true, 0, Color.GREEN)
+
+		# Build choice slots
+		for c_idx in range(choices.size()):
+			var choice_info: Dictionary = choices[c_idx]
+			var c_text: String = choice_info.get("text", "")
+			var c_label: Label = Label.new()
+			c_label.text = "- " + c_text
+			c_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+			c_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+			gnode.add_child(c_label)
+			
+			var slot_idx: int = c_idx + 1
+			gnode.set_slot(slot_idx, false, 0, Color.WHITE, true, 0, Color(0.2, 0.7, 1.0, 1.0))
 
 	# Connect edges
 	for node_data: FlowChartNodeData in flow_chart.nodes:
 		if not node_data.default_next_node_id.is_empty():
-			graph_edit.connect_node(node_data.node_id, 0, node_data.default_next_node_id, 0)
-		for choice: Dictionary in node_data.choices:
-			var target_id: String = choice.get("target_node_id", "")
-			if not target_id.is_empty():
-				graph_edit.connect_node(node_data.node_id, 0, target_id, 0)
+			if flow_chart.get_node_by_id(node_data.default_next_node_id) != null:
+				graph_edit.connect_node(node_data.node_id, 0, node_data.default_next_node_id, 0)
+
+		var choices: Array[Dictionary] = FlowChartFileManager.get_choices_from_dtl(node_data.timeline_path)
+		for c_idx in range(choices.size()):
+			var choice_info: Dictionary = choices[c_idx]
+			var c_text: String = choice_info.get("text", "")
+			var target_name: String = choice_info.get("target_timeline", "")
+			var target_node_id: String = node_data.get_choice_target(c_text)
+
+			if target_node_id.is_empty() and not target_name.is_empty():
+				for target_node: FlowChartNodeData in flow_chart.nodes:
+					if target_node.get_timeline_name() == target_name:
+						target_node_id = target_node.node_id
+						node_data.set_choice_target(c_text, target_node_id)
+						break
+
+			if not target_node_id.is_empty() and flow_chart.get_node_by_id(target_node_id) != null:
+				graph_edit.connect_node(node_data.node_id, c_idx + 1, target_node_id, 0)
 
 	update_node_visuals()
 

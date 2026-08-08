@@ -102,6 +102,41 @@ static func is_jump_to_target(line: String, target_timeline_name: String) -> boo
 	var dest_clean: String = dest.get_file().trim_suffix(".dtl").strip_edges()
 	return dest_clean == target_clean
 
+static func get_choices_from_dtl(dtl_path: String) -> Array[Dictionary]:
+	var result: Array[Dictionary] = []
+	if dtl_path.is_empty() or not FileAccess.file_exists(dtl_path):
+		return result
+
+	var file: FileAccess = FileAccess.open(dtl_path, FileAccess.READ)
+	if file == null:
+		return result
+	var content: String = file.get_as_text()
+	file.close()
+
+	var lines: PackedStringArray = content.split("\n")
+	var current_choice: Dictionary = {}
+
+	for i in range(lines.size()):
+		var line: String = lines[i]
+		var s: String = line.strip_edges()
+		if s.begins_with("- ") or s.begins_with("-\t") or s == "-":
+			var text: String = s.trim_prefix("-").strip_edges()
+			current_choice = {
+				"text": text,
+				"line_index": i,
+				"target_timeline": ""
+			}
+			result.append(current_choice)
+		elif not current_choice.is_empty() and s.begins_with("jump "):
+			var dest: String = s.trim_prefix("jump ").strip_edges()
+			if dest.ends_with("/"):
+				dest = dest.trim_suffix("/").strip_edges()
+			elif "/" in dest and not dest.begins_with("res://"):
+				dest = dest.split("/")[0].strip_edges()
+			current_choice["target_timeline"] = dest.get_file().trim_suffix(".dtl").strip_edges()
+
+	return result
+
 static func inject_jump(source_dtl_path: String, target_timeline_name: String) -> void:
 	var target_clean: String = target_timeline_name.get_file().trim_suffix(".dtl").strip_edges()
 	if source_dtl_path.is_empty() or target_clean.is_empty():
@@ -136,6 +171,61 @@ static func inject_jump(source_dtl_path: String, target_timeline_name: String) -
 			print("Injected jump into [", source_dtl_path, "]: jump ", target_clean, "/")
 			force_reload_resource(source_dtl_path)
 
+static func inject_choice_jump(source_dtl_path: String, choice_text: String, target_timeline_name: String) -> void:
+	var target_clean: String = target_timeline_name.get_file().trim_suffix(".dtl").strip_edges()
+	if source_dtl_path.is_empty() or choice_text.is_empty() or target_clean.is_empty():
+		return
+	if not FileAccess.file_exists(source_dtl_path):
+		return
+
+	save_open_editor_if_needed(source_dtl_path)
+
+	var file: FileAccess = FileAccess.open(source_dtl_path, FileAccess.READ)
+	if file == null:
+		return
+	var content: String = file.get_as_text()
+	file.close()
+
+	var lines: PackedStringArray = content.split("\n")
+	var new_lines: Array[String] = []
+	var inside_target_choice: bool = false
+	var choice_indent: String = "\t"
+	var jump_added: bool = false
+
+	for i in range(lines.size()):
+		var line: String = lines[i]
+		var s: String = line.strip_edges()
+
+		if s.begins_with("- ") or s.begins_with("-\t") or s == "-":
+			var text: String = s.trim_prefix("-").strip_edges()
+			if inside_target_choice and not jump_added:
+				new_lines.append(choice_indent + "jump " + target_clean + "/")
+				jump_added = true
+			inside_target_choice = (text == choice_text)
+			if inside_target_choice:
+				var raw_indent: String = line.substr(0, line.length() - line.strip_edges(true, false).length())
+				choice_indent = raw_indent + "\t"
+			new_lines.append(line)
+		elif inside_target_choice:
+			if s.begins_with("jump "):
+				new_lines.append(choice_indent + "jump " + target_clean + "/")
+				jump_added = true
+			else:
+				new_lines.append(line)
+		else:
+			new_lines.append(line)
+
+	if inside_target_choice and not jump_added:
+		new_lines.append(choice_indent + "jump " + target_clean + "/")
+		jump_added = true
+
+	var write_file: FileAccess = FileAccess.open(source_dtl_path, FileAccess.WRITE)
+	if write_file != null:
+		write_file.store_string("\n".join(new_lines))
+		write_file.close()
+		print("Injected choice jump into [", source_dtl_path, "] choice [", choice_text, "]: jump ", target_clean, "/")
+		force_reload_resource(source_dtl_path)
+
 static func remove_jump(source_dtl_path: String, target_timeline_name: String) -> void:
 	if source_dtl_path.is_empty() or target_timeline_name.is_empty():
 		return
@@ -167,4 +257,45 @@ static func remove_jump(source_dtl_path: String, target_timeline_name: String) -
 			write_file.store_string(new_content)
 			write_file.close()
 			print("Removed jump from [", source_dtl_path, "]: ", target_timeline_name)
+			force_reload_resource(source_dtl_path)
+
+static func remove_choice_jump(source_dtl_path: String, choice_text: String, target_timeline_name: String) -> void:
+	if source_dtl_path.is_empty() or choice_text.is_empty():
+		return
+	if not FileAccess.file_exists(source_dtl_path):
+		return
+
+	save_open_editor_if_needed(source_dtl_path)
+
+	var file: FileAccess = FileAccess.open(source_dtl_path, FileAccess.READ)
+	if file == null:
+		return
+	var content: String = file.get_as_text()
+	file.close()
+
+	var lines: PackedStringArray = content.split("\n")
+	var new_lines: Array = []
+	var inside_target_choice: bool = false
+	var modified: bool = false
+
+	for i in range(lines.size()):
+		var line: String = lines[i]
+		var s: String = line.strip_edges()
+
+		if s.begins_with("- ") or s.begins_with("-\t") or s == "-":
+			var text: String = s.trim_prefix("-").strip_edges()
+			inside_target_choice = (text == choice_text)
+			new_lines.append(line)
+		elif inside_target_choice and is_jump_to_target(s, target_timeline_name):
+			modified = true
+		else:
+			new_lines.append(line)
+
+	if modified:
+		var new_content: String = "\n".join(new_lines)
+		var write_file: FileAccess = FileAccess.open(source_dtl_path, FileAccess.WRITE)
+		if write_file != null:
+			write_file.store_string(new_content)
+			write_file.close()
+			print("Removed choice jump from [", source_dtl_path, "] choice [", choice_text, "]: ", target_timeline_name)
 			force_reload_resource(source_dtl_path)
