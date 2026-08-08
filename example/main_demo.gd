@@ -23,5 +23,5 @@ func _start_demo() -> void:
 	runner.start_flow_chart()
 
 func _on_toggle_map() -> void:
-	graph_ui.visible = not graph_ui.visible
-	toggle_btn.text = "Hide Flowchart Map" if graph_ui.visible else "Show Flowchart Map"
+	var shown: bool = graph_ui.toggle_map_visibility()
+	toggle_btn.text = "Hide Flowchart Map" if shown else "Show Flowchart Map"

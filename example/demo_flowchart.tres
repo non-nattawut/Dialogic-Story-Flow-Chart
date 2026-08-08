@@ -1,4 +1,4 @@
-[gd_resource type="Resource" script_class="FlowChartData" format=3 uid="uid://bvko51e261n8o"]
+[gd_resource type="Resource" script_class="FlowChartData" format=3 uid="uid://c4meqeurr6pvm"]
 
 [ext_resource type="Script" uid="uid://ds7u5hvdjofbj" path="res://addons/dialogic_flow_chart/core/flow_chart_resource.gd" id="1_flowchart_data"]
 [ext_resource type="Script" uid="uid://m3mn0nm3u310" path="res://addons/dialogic_flow_chart/core/flow_chart_node_data.gd" id="2_node_data"]
@@ -7,8 +7,8 @@
 script = ExtResource("2_node_data")
 node_id = "node_start"
 title = "1. Start Scene"
-position = Vector2(-20, 160)
-size = Vector2(260, 210)
+position = Vector2(-100, 120)
+size = Vector2(378, 223)
 timeline_path = "res://example/timelines/start.dtl"
 choices = Array[Dictionary]([{
 "target_node_id": "node_train_day",

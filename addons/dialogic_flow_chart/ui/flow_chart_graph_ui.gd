@@ -14,8 +14,17 @@ signal node_clicked(node_id: String)
 @export var locked_node_color: Color = Color(0.4, 0.4, 0.4, 0.8)
 
 var graph_edit: GraphEdit
+var map_canvas_layer: CanvasLayer
 var visited_node_ids: Array[String] = []
 var current_active_node_id: String = ""
+
+@export var is_map_visible: bool = true:
+	set(value):
+		is_map_visible = value
+		if map_canvas_layer != null:
+			map_canvas_layer.visible = value
+		elif graph_edit != null:
+			graph_edit.visible = value
 
 func _ready() -> void:
 	_setup_graph_ui()
@@ -28,12 +37,21 @@ func _setup_graph_ui() -> void:
 	for child in get_children():
 		child.queue_free()
 
+	map_canvas_layer = CanvasLayer.new()
+	map_canvas_layer.name = "MapCanvasLayer"
+	map_canvas_layer.layer = 15 # Render above Dialogic UI layer (layer 1-10)
+	add_child(map_canvas_layer)
+
 	graph_edit = GraphEdit.new()
 	graph_edit.anchors_preset = Control.PRESET_FULL_RECT
 	graph_edit.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	graph_edit.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	graph_edit.right_disconnects = false
-	add_child(graph_edit)
+	map_canvas_layer.add_child(graph_edit)
+
+func toggle_map_visibility() -> bool:
+	is_map_visible = not is_map_visible
+	return is_map_visible
 
 func _connect_dialogic_signals() -> void:
 	if Engine.has_singleton("Dialogic") or get_node_or_null("/root/Dialogic") != null:
