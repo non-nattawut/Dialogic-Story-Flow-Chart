@@ -274,7 +274,7 @@ func _refresh_graph() -> void:
 			gnode.name = node_data.node_id
 			gnode.title = node_data.title
 			gnode.position_offset = node_data.position
-			gnode.custom_minimum_size = Vector2(220, 70)
+			gnode.custom_minimum_size = Vector2(240, 70)
 			gnode.resizable = false
 
 			var header_hbox: HBoxContainer = HBoxContainer.new()
@@ -310,28 +310,90 @@ func _refresh_graph() -> void:
 			if lbl != null:
 				lbl.text = node_data.timeline_path.get_file() if not node_data.timeline_path.is_empty() else "(No DTL File)"
 
-		# Clear old choice labels immediately to prevent duplicate elements
+		# Clear old choice labels & footers immediately
 		gnode.clear_all_slots()
 		gnode.set_slot(0, true, 0, Color.WHITE, true, 0, Color.GREEN)
 
 		for child in gnode.get_children():
-			if child != null and child.name.begins_with("ChoiceSlot_"):
+			if child != null and (child.name.begins_with("ChoiceSlot_") or child.name == "AddChoiceFooter"):
 				gnode.remove_child(child)
 				child.queue_free()
 
-		# Build choice slots
+		# Build choice slots with inline LineEdit and Delete button
 		for c_idx in range(choices.size()):
 			var choice_info: Dictionary = choices[c_idx]
 			var c_text: String = choice_info.get("text", "")
-			var c_label: Label = Label.new()
-			c_label.name = "ChoiceSlot_" + str(c_idx)
-			c_label.text = "- " + c_text
-			c_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
-			c_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-			gnode.add_child(c_label)
+			
+			var choice_hbox: HBoxContainer = HBoxContainer.new()
+			choice_hbox.name = "ChoiceSlot_" + str(c_idx)
+			choice_hbox.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+
+			var prefix_lbl: Label = Label.new()
+			prefix_lbl.text = "-"
+			choice_hbox.add_child(prefix_lbl)
+
+			var line_edit: LineEdit = LineEdit.new()
+			line_edit.name = "ChoiceEdit"
+			line_edit.text = c_text
+			line_edit.placeholder_text = "Choice text..."
+			line_edit.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+			line_edit.flat = true
+			
+			var dtl_p: String = node_data.timeline_path
+			var old_t: String = c_text
+			line_edit.text_submitted.connect(func(new_text: String):
+				var trimmed: String = new_text.strip_edges()
+				if not trimmed.is_empty() and trimmed != old_t:
+					FlowChartFileManager.rename_choice_in_dtl(dtl_p, old_t, trimmed)
+					node_data.set_choice_target(trimmed, node_data.get_choice_target(old_t))
+					_save_current_chart_silent()
+					_refresh_graph()
+			)
+			line_edit.focus_exited.connect(func():
+				var trimmed: String = line_edit.text.strip_edges()
+				if not trimmed.is_empty() and trimmed != old_t:
+					FlowChartFileManager.rename_choice_in_dtl(dtl_p, old_t, trimmed)
+					node_data.set_choice_target(trimmed, node_data.get_choice_target(old_t))
+					_save_current_chart_silent()
+					_refresh_graph()
+			)
+			choice_hbox.add_child(line_edit)
+
+			var del_choice_btn: Button = Button.new()
+			del_choice_btn.text = "✕"
+			del_choice_btn.flat = true
+			del_choice_btn.pressed.connect(func():
+				FlowChartFileManager.delete_choice_from_dtl(dtl_p, old_t)
+				_save_current_chart_silent()
+				_refresh_graph()
+			)
+			choice_hbox.add_child(del_choice_btn)
+
+			gnode.add_child(choice_hbox)
 			
 			var slot_idx: int = c_idx + 1
 			gnode.set_slot(slot_idx, false, 0, Color.WHITE, true, 0, Color(0.2, 0.7, 1.0, 1.0))
+
+		# Build "+ Add Choice" Footer Button
+		var footer_hbox: HBoxContainer = HBoxContainer.new()
+		footer_hbox.name = "AddChoiceFooter"
+		footer_hbox.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+
+		var add_btn: Button = Button.new()
+		add_btn.text = "+ Add Choice"
+		add_btn.flat = true
+		add_btn.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		var target_dtl: String = node_data.timeline_path
+		add_btn.pressed.connect(func():
+			FlowChartFileManager.add_choice_to_dtl(target_dtl, "New Choice")
+			_save_current_chart_silent()
+			_refresh_graph()
+		)
+		footer_hbox.add_child(add_btn)
+
+		gnode.add_child(footer_hbox)
+		var footer_slot: int = choices.size() + 1
+		gnode.set_slot(footer_slot, false, 0, Color.WHITE, false, 0, Color.WHITE)
 
 	if is_inside_tree():
 		await get_tree().process_frame

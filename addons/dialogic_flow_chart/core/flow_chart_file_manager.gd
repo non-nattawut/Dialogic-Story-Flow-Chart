@@ -137,6 +137,114 @@ static func get_choices_from_dtl(dtl_path: String) -> Array[Dictionary]:
 
 	return result
 
+static func add_choice_to_dtl(dtl_path: String, choice_text: String) -> void:
+	if dtl_path.is_empty() or choice_text.is_empty():
+		return
+	if not FileAccess.file_exists(dtl_path):
+		create_empty_dtl(dtl_path)
+
+	save_open_editor_if_needed(dtl_path)
+
+	var file: FileAccess = FileAccess.open(dtl_path, FileAccess.READ)
+	if file == null:
+		return
+	var content: String = file.get_as_text().strip_edges()
+	file.close()
+
+	if not content.is_empty():
+		content += "\n"
+	content += "- " + choice_text + "\n"
+
+	var write_file: FileAccess = FileAccess.open(dtl_path, FileAccess.WRITE)
+	if write_file != null:
+		write_file.store_string(content)
+		write_file.close()
+		print("Added choice to [", dtl_path, "]: - ", choice_text)
+		force_reload_resource(dtl_path)
+
+static func rename_choice_in_dtl(dtl_path: String, old_choice_text: String, new_choice_text: String) -> void:
+	if dtl_path.is_empty() or old_choice_text.is_empty() or new_choice_text.is_empty():
+		return
+	if old_choice_text == new_choice_text:
+		return
+	if not FileAccess.file_exists(dtl_path):
+		return
+
+	save_open_editor_if_needed(dtl_path)
+
+	var file: FileAccess = FileAccess.open(dtl_path, FileAccess.READ)
+	if file == null:
+		return
+	var content: String = file.get_as_text()
+	file.close()
+
+	var lines: PackedStringArray = content.split("\n")
+	var new_lines: Array = []
+	var modified: bool = false
+
+	for line: String in lines:
+		var s: String = line.strip_edges()
+		if s.begins_with("- ") or s.begins_with("-\t") or s == "-":
+			var text: String = s.trim_prefix("-").strip_edges()
+			if text == old_choice_text:
+				var indent: String = line.substr(0, line.length() - line.strip_edges(true, false).length())
+				new_lines.append(indent + "- " + new_choice_text)
+				modified = true
+			else:
+				new_lines.append(line)
+		else:
+			new_lines.append(line)
+
+	if modified:
+		var write_file: FileAccess = FileAccess.open(dtl_path, FileAccess.WRITE)
+		if write_file != null:
+			write_file.store_string("\n".join(new_lines))
+			write_file.close()
+			print("Renamed choice in [", dtl_path, "]: ", old_choice_text, " -> ", new_choice_text)
+			force_reload_resource(dtl_path)
+
+static func delete_choice_from_dtl(dtl_path: String, choice_text: String) -> void:
+	if dtl_path.is_empty() or choice_text.is_empty():
+		return
+	if not FileAccess.file_exists(dtl_path):
+		return
+
+	save_open_editor_if_needed(dtl_path)
+
+	var file: FileAccess = FileAccess.open(dtl_path, FileAccess.READ)
+	if file == null:
+		return
+	var content: String = file.get_as_text()
+	file.close()
+
+	var lines: PackedStringArray = content.split("\n")
+	var new_lines: Array = []
+	var inside_target_choice: bool = false
+	var modified: bool = false
+
+	for line: String in lines:
+		var s: String = line.strip_edges()
+		if s.begins_with("- ") or s.begins_with("-\t") or s == "-":
+			var text: String = s.trim_prefix("-").strip_edges()
+			if text == choice_text:
+				inside_target_choice = true
+				modified = true
+			else:
+				inside_target_choice = false
+				new_lines.append(line)
+		elif inside_target_choice:
+			pass
+		else:
+			new_lines.append(line)
+
+	if modified:
+		var write_file: FileAccess = FileAccess.open(dtl_path, FileAccess.WRITE)
+		if write_file != null:
+			write_file.store_string("\n".join(new_lines))
+			write_file.close()
+			print("Deleted choice from [", dtl_path, "]: ", choice_text)
+			force_reload_resource(dtl_path)
+
 static func inject_jump(source_dtl_path: String, target_timeline_name: String) -> void:
 	var target_clean: String = target_timeline_name.get_file().trim_suffix(".dtl").strip_edges()
 	if source_dtl_path.is_empty() or target_clean.is_empty():
