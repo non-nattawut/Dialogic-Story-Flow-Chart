@@ -64,10 +64,12 @@ func _ready() -> void:
 		_do_new_chart()
 
 func _can_drop_data(_at_position: Vector2, data: Variant) -> bool:
-	if typeof(data) == TYPE_DICTIONARY and data.has("type") and data["type"] == "files":
-		var files: PackedStringArray = data.get("files", [])
-		if files.size() > 0 and files[0].ends_with(".dtl"):
-			return true
+	if typeof(data) == TYPE_DICTIONARY:
+		var type: String = data.get("type", "")
+		if type == "files" or type == "files_and_dirs":
+			var files: PackedStringArray = data.get("files", [])
+			if files.size() > 0 and files[0].ends_with(".dtl"):
+				return true
 	return false
 
 func _drop_data(at_position: Vector2, data: Variant) -> void:
@@ -81,17 +83,18 @@ func _handle_file_dropped(at_position: Vector2, dtl_path: String) -> void:
 	if current_flow_chart == null:
 		_do_new_chart()
 
-	var new_id: String = "node_" + str(Time.get_ticks_msec())
+	var time_stamp: String = str(Time.get_ticks_msec())
+	var new_id: String = "node_" + time_stamp
 	var node: FlowChartNodeData = FlowChartNodeData.new()
 	node.node_id = new_id
 	var file_name: String = dtl_path.get_file().get_basename()
 	node.title = file_name.capitalize()
 	node.timeline_path = dtl_path
 	
-	# Calculate canvas offset relative to GraphEdit
+	# Calculate position in graph
 	var graph_pos: Vector2 = at_position
 	if graph_edit != null:
-		graph_pos = (at_position - graph_edit.position + graph_edit.scroll_offset) / graph_edit.zoom
+		graph_pos = (at_position + graph_edit.scroll_offset) / graph_edit.zoom
 	node.position = graph_pos
 
 	current_flow_chart.add_node(node)
@@ -244,10 +247,29 @@ func _on_add_timeline_node() -> void:
 	if current_flow_chart == null:
 		_do_new_chart()
 
-	var new_id: String = "node_" + str(Time.get_ticks_msec())
+	var time_stamp: String = str(Time.get_ticks_msec())
+	var new_id: String = "timeline_" + time_stamp
+	var dtl_dir: String = "res://example/timelines/"
+	
+	if not DirAccess.dir_exists_absolute(dtl_dir):
+		DirAccess.make_dir_recursive_absolute(dtl_dir)
+		
+	var dtl_path: String = dtl_dir + new_id + ".dtl"
+	
+	# Auto-create .dtl file on disk
+	var starter_content: String = "[background path=\"res://assets/background/Apartment_Exterior.png\" fade=\"1.0\"]\njoin hiyori center\nhiyori: New timeline scene beat.\n"
+	var file: FileAccess = FileAccess.open(dtl_path, FileAccess.WRITE)
+	if file != null:
+		file.store_string(starter_content)
+		file.close()
+		print("Auto-created DTL timeline file: ", dtl_path)
+		if Engine.is_editor_hint():
+			EditorInterface.get_resource_filesystem().scan()
+
 	var node: FlowChartNodeData = FlowChartNodeData.new()
 	node.node_id = new_id
-	node.title = "New Timeline Box"
+	node.title = new_id.capitalize()
+	node.timeline_path = dtl_path
 	node.position = Vector2(300, 140)
 	current_flow_chart.add_node(node)
 	_refresh_graph()
@@ -305,6 +327,7 @@ func _refresh_graph() -> void:
 			var header_hbox: HBoxContainer = HBoxContainer.new()
 
 			var path_lbl: Label = Label.new()
+			path_lbl.name = "PathLabel"
 			var short_name: String = node_data.timeline_path.get_file() if not node_data.timeline_path.is_empty() else "(No DTL File)"
 			path_lbl.text = short_name
 			path_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER

@@ -16,6 +16,7 @@ choices = Array[Dictionary]([{
 "target_node_id": "node_onsen",
 "text": "Visit the local hot spring onsen"
 }])
+default_next_node_id = "node_87437"
 
 [sub_resource type="Resource" id="Resource_node_train_day"]
 script = ExtResource("2_node_data")
@@ -47,7 +48,13 @@ title = "3B. Evening Futon"
 position = Vector2(820, 240)
 timeline_path = "res://example/timelines/futon_night.dtl"
 
+[sub_resource type="Resource" id="Resource_8edec"]
+script = ExtResource("2_node_data")
+node_id = "node_87437"
+title = "New Timeline Box"
+position = Vector2(460, 420)
+
 [resource]
 script = ExtResource("1_flowchart_data")
 start_node_id = "node_start"
-nodes = Array[ExtResource("2_node_data")]([SubResource("Resource_node_start"), SubResource("Resource_node_train_day"), SubResource("Resource_node_train_night"), SubResource("Resource_node_onsen"), SubResource("Resource_node_futon_night")])
+nodes = Array[ExtResource("2_node_data")]([SubResource("Resource_node_start"), SubResource("Resource_node_train_day"), SubResource("Resource_node_train_night"), SubResource("Resource_node_onsen"), SubResource("Resource_node_futon_night"), SubResource("Resource_8edec")])
