@@ -47,6 +47,8 @@ func _ready() -> void:
 		graph_edit.disconnection_request.connect(_on_disconnection_request)
 		if graph_edit.has_signal("delete_nodes_request"):
 			graph_edit.delete_nodes_request.connect(_on_delete_nodes_request)
+		if graph_edit.has_signal("end_node_move"):
+			graph_edit.end_node_move.connect(_sync_node_positions_from_graph)
 
 	_build_inspector_fields()
 	_setup_confirm_dialog()
@@ -157,6 +159,7 @@ func _do_new_chart() -> void:
 func _on_save_chart() -> void:
 	if current_flow_chart == null:
 		return
+	_sync_node_positions_from_graph()
 	if current_resource_path.is_empty():
 		_on_save_as_file_dialog()
 		return
@@ -193,6 +196,8 @@ func _on_open_file_dialog() -> void:
 		file_dialog.popup_centered_ratio(0.6)
 
 func _on_add_timeline_node() -> void:
+	_sync_node_positions_from_graph()
+
 	if current_flow_chart == null:
 		_do_new_chart()
 
@@ -205,20 +210,35 @@ func _on_add_timeline_node() -> void:
 	_refresh_graph()
 
 func _on_delete_nodes_request(node_names: Array) -> void:
+	_sync_node_positions_from_graph()
+
 	if current_flow_chart == null:
 		return
 
 	for node_name: Variant in node_names:
 		var id_str: String = String(node_name)
 		current_flow_chart.remove_node_by_id(id_str)
-		if graph_edit.has_node(id_str):
-			graph_edit.get_node(id_str).queue_free()
+		# Remove references in other nodes
+		for n: FlowChartNodeData in current_flow_chart.nodes:
+			if n.default_next_node_id == id_str:
+				n.default_next_node_id = ""
 
 	_refresh_graph()
+
+func _sync_node_positions_from_graph() -> void:
+	if graph_edit == null or current_flow_chart == null:
+		return
+	for child in graph_edit.get_children():
+		if child is GraphNode:
+			var node_data: FlowChartNodeData = current_flow_chart.get_node_by_id(child.name)
+			if node_data != null:
+				node_data.position = child.position_offset
 
 func _refresh_graph() -> void:
 	if graph_edit == null or current_flow_chart == null:
 		return
+
+	_sync_node_positions_from_graph()
 
 	graph_edit.clear_connections()
 	for child in graph_edit.get_children():
@@ -267,10 +287,11 @@ func _refresh_graph() -> void:
 	# Restore Connections
 	for node_data: FlowChartNodeData in current_flow_chart.nodes:
 		if not node_data.default_next_node_id.is_empty():
-			graph_edit.connect_node(node_data.node_id, 0, node_data.default_next_node_id, 0)
+			if current_flow_chart.get_node_by_id(node_data.default_next_node_id) != null:
+				graph_edit.connect_node(node_data.node_id, 0, node_data.default_next_node_id, 0)
 		for choice: Dictionary in node_data.choices:
 			var target_id: String = choice.get("target_node_id", "")
-			if not target_id.is_empty():
+			if not target_id.is_empty() and current_flow_chart.get_node_by_id(target_id) != null:
 				graph_edit.connect_node(node_data.node_id, 0, target_id, 0)
 
 func _on_node_selected(node: Node) -> void:
