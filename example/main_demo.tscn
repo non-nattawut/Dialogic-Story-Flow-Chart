@@ -1,10 +1,11 @@
-[gd_scene format=3 uid="uid://bvsh5oqoulmoa"]
+[gd_scene load_steps=5 format=3 uid="uid://bflowchartdemo01"]
 
-[ext_resource type="Script" uid="uid://cilojtv0uh5v1" path="res://example/main_demo.gd" id="1_main_demo"]
-[ext_resource type="Script" uid="uid://vp6ku7wl4u6f" path="res://addons/dialogic_flow_chart/flow_chart_graph_ui.gd" id="2_graph_ui"]
-[ext_resource type="Script" uid="uid://7qq62y3d0wuv" path="res://addons/dialogic_flow_chart/flow_chart_runner.gd" id="3_runner"]
+[ext_resource type="Script" path="res://example/main_demo.gd" id="1_main_demo"]
+[ext_resource type="Script" path="res://addons/dialogic_flow_chart/flow_chart_graph_ui.gd" id="2_graph_ui"]
+[ext_resource type="Resource" uid="uid://bdemoflowcharttres01" path="res://example/demo_flowchart.tres" id="2_res"]
+[ext_resource type="Script" path="res://addons/dialogic_flow_chart/flow_chart_runner.gd" id="3_runner"]
 
-[node name="MainDemo" type="Control" unique_id=399380163]
+[node name="MainDemo" type="Control"]
 layout_mode = 3
 anchors_preset = 15
 anchor_right = 1.0
@@ -12,8 +13,9 @@ anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 script = ExtResource("1_main_demo")
+flow_chart = ExtResource("2_res")
 
-[node name="FlowChartGraphUI" type="Control" parent="." unique_id=194042180]
+[node name="FlowChartGraphUI" type="Control" parent="."]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
@@ -21,14 +23,16 @@ anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 script = ExtResource("2_graph_ui")
+flow_chart = ExtResource("2_res")
 
-[node name="FlowChartRunner" type="Node" parent="." unique_id=1826844392]
+[node name="FlowChartRunner" type="Node" parent="."]
 script = ExtResource("3_runner")
+flow_chart = ExtResource("2_res")
 
-[node name="CanvasLayer" type="CanvasLayer" parent="." unique_id=932309804]
+[node name="CanvasLayer" type="CanvasLayer" parent="."]
 layer = 10
 
-[node name="ToggleMapButton" type="Button" parent="CanvasLayer" unique_id=1968411753]
+[node name="ToggleMapButton" type="Button" parent="CanvasLayer"]
 anchors_preset = 1
 anchor_left = 1.0
 anchor_right = 1.0

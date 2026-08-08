@@ -3,19 +3,25 @@ class_name FlowChartEditor
 extends Control
 
 var current_flow_chart: FlowChartData
+var current_resource_path: String = "res://example/demo_flowchart.tres"
 var selected_node_data: FlowChartNodeData
 
 @onready var graph_edit: GraphEdit = $MainVBox/HSplitContainer/GraphEdit
 @onready var inspector_panel: VBoxContainer = $MainVBox/HSplitContainer/InspectorScroll/InspectorVBox
 
 @onready var btn_new: Button = $MainVBox/Toolbar/BtnNew
+@onready var btn_open: Button = $MainVBox/Toolbar/BtnOpen
+@onready var btn_save: Button = $MainVBox/Toolbar/BtnSave
+@onready var btn_save_as: Button = $MainVBox/Toolbar/BtnSaveAs
 @onready var btn_add_node: Button = $MainVBox/Toolbar/BtnAddNode
-@onready var btn_load_demo: Button = $MainVBox/Toolbar/BtnLoadDemo
+@onready var current_file_label: Label = $MainVBox/Toolbar/CurrentFileLabel
 
 # Form Fields
 var title_field: LineEdit
 var timeline_path_field: LineEdit
 var default_next_field: LineEdit
+
+var file_dialog: EditorFileDialog
 
 func _ready() -> void:
 	anchors_preset = Control.PRESET_FULL_RECT
@@ -24,10 +30,14 @@ func _ready() -> void:
 
 	if btn_new != null:
 		btn_new.pressed.connect(_on_new_chart)
+	if btn_open != null:
+		btn_open.pressed.connect(_on_open_file_dialog)
+	if btn_save != null:
+		btn_save.pressed.connect(_on_save_chart)
+	if btn_save_as != null:
+		btn_save_as.pressed.connect(_on_save_as_file_dialog)
 	if btn_add_node != null:
 		btn_add_node.pressed.connect(_on_add_timeline_node)
-	if btn_load_demo != null:
-		btn_load_demo.pressed.connect(_on_load_demo_chart)
 
 	if graph_edit != null:
 		graph_edit.node_selected.connect(_on_node_selected)
@@ -36,9 +46,15 @@ func _ready() -> void:
 
 	_build_inspector_fields()
 
-	# Auto-load demo flowchart if no chart loaded yet
-	if current_flow_chart == null:
-		_on_load_demo_chart()
+	# Auto-load existing demo flowchart
+	if FileAccess.file_exists(current_resource_path):
+		var res: FlowChartData = load(current_resource_path) as FlowChartData
+		if res != null:
+			load_flow_chart(res, current_resource_path)
+		else:
+			_on_new_chart()
+	else:
+		_on_new_chart()
 
 func _build_inspector_fields() -> void:
 	if inspector_panel == null:
@@ -83,8 +99,12 @@ func _add_field(title: String) -> LineEdit:
 	inspector_panel.add_child(line)
 	return line
 
-func load_flow_chart(chart: FlowChartData) -> void:
+func load_flow_chart(chart: FlowChartData, path: String = "") -> void:
 	current_flow_chart = chart
+	if not path.is_empty():
+		current_resource_path = path
+	if current_file_label != null:
+		current_file_label.text = "File: " + current_resource_path
 	_refresh_graph()
 
 func _on_new_chart() -> void:
@@ -93,20 +113,53 @@ func _on_new_chart() -> void:
 
 	var start_node: FlowChartNodeData = FlowChartNodeData.new()
 	start_node.node_id = "start"
-	start_node.title = "Start Timeline"
+	start_node.title = "Start Scene"
 	start_node.timeline_path = "res://example/timelines/start.dtl"
-	start_node.position = Vector2(80, 180)
+	start_node.position = Vector2(80, 140)
 	current_flow_chart.add_node(start_node)
 
+	current_resource_path = "res://example/new_flowchart.tres"
+	if current_file_label != null:
+		current_file_label.text = "File: " + current_resource_path
 	_refresh_graph()
 
-func _on_load_demo_chart() -> void:
-	var demo_builder: Script = load("res://example/demo_flowchart_builder.gd")
-	if demo_builder != null and demo_builder.has_method("create_demo_chart"):
-		current_flow_chart = demo_builder.create_demo_chart()
-		_refresh_graph()
-	else:
-		_on_new_chart()
+func _on_save_chart() -> void:
+	if current_flow_chart == null:
+		return
+	if current_resource_path.is_empty():
+		_on_save_as_file_dialog()
+		return
+	ResourceSaver.save(current_flow_chart, current_resource_path)
+	print("Saved Flow Chart to: ", current_resource_path)
+	if current_file_label != null:
+		current_file_label.text = "File: " + current_resource_path
+
+func _on_save_as_file_dialog() -> void:
+	if Engine.is_editor_hint():
+		file_dialog = EditorFileDialog.new()
+		file_dialog.file_mode = EditorFileDialog.FILE_MODE_SAVE_FILE
+		file_dialog.add_filter("*.tres", "FlowChart Data Resource")
+		file_dialog.file_selected.connect(func(path):
+			current_resource_path = path
+			_on_save_chart()
+			file_dialog.queue_free()
+		)
+		add_child(file_dialog)
+		file_dialog.popup_centered_ratio(0.6)
+
+func _on_open_file_dialog() -> void:
+	if Engine.is_editor_hint():
+		file_dialog = EditorFileDialog.new()
+		file_dialog.file_mode = EditorFileDialog.FILE_MODE_OPEN_FILE
+		file_dialog.add_filter("*.tres", "FlowChart Data Resource")
+		file_dialog.file_selected.connect(func(path):
+			var res: FlowChartData = load(path) as FlowChartData
+			if res != null:
+				load_flow_chart(res, path)
+			file_dialog.queue_free()
+		)
+		add_child(file_dialog)
+		file_dialog.popup_centered_ratio(0.6)
 
 func _on_add_timeline_node() -> void:
 	if current_flow_chart == null:
@@ -116,7 +169,7 @@ func _on_add_timeline_node() -> void:
 	var node: FlowChartNodeData = FlowChartNodeData.new()
 	node.node_id = new_id
 	node.title = "New Timeline Box"
-	node.position = Vector2(300, 180)
+	node.position = Vector2(300, 140)
 	current_flow_chart.add_node(node)
 	_refresh_graph()
 
@@ -134,17 +187,18 @@ func _refresh_graph() -> void:
 		gnode.name = node_data.node_id
 		gnode.title = node_data.title
 		gnode.position_offset = node_data.position
-		gnode.size = Vector2(240, 140)
-		gnode.resizable = true
+		
+		# Sleek, compact node box dimensions
+		gnode.custom_minimum_size = Vector2(180, 60)
+		gnode.resizable = false
 
-		var vbox: VBoxContainer = VBoxContainer.new()
 		var path_lbl: Label = Label.new()
-		path_lbl.text = node_data.timeline_path if not node_data.timeline_path.is_empty() else "(No DTL File Linked)"
-		path_lbl.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-		vbox.add_child(path_lbl)
-		gnode.add_child(vbox)
+		var short_name: String = node_data.timeline_path.get_file() if not node_data.timeline_path.is_empty() else "(No DTL File)"
+		path_lbl.text = short_name
+		path_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		gnode.add_child(path_lbl)
 
-		# Slot 0: Input & Default Output
+		# Slot 0: Input & Output
 		gnode.set_slot(0, true, 0, Color.WHITE, true, 0, Color.GREEN)
 
 		graph_edit.add_child(gnode)

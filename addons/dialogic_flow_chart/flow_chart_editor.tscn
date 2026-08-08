@@ -31,13 +31,30 @@ layout_mode = 2
 layout_mode = 2
 text = "New Flow Chart"
 
+[node name="BtnOpen" type="Button" parent="MainVBox/Toolbar"]
+layout_mode = 2
+text = "Open File..."
+
+[node name="BtnSave" type="Button" parent="MainVBox/Toolbar"]
+layout_mode = 2
+text = "Save Flow Chart"
+
+[node name="BtnSaveAs" type="Button" parent="MainVBox/Toolbar"]
+layout_mode = 2
+text = "Save As..."
+
+[node name="VSeparator" type="VSeparator" parent="MainVBox/Toolbar"]
+layout_mode = 2
+
 [node name="BtnAddNode" type="Button" parent="MainVBox/Toolbar"]
 layout_mode = 2
 text = "+ Add Timeline Box Node"
 
-[node name="BtnLoadDemo" type="Button" parent="MainVBox/Toolbar"]
+[node name="CurrentFileLabel" type="Label" parent="MainVBox/Toolbar"]
 layout_mode = 2
-text = "Load Demo Flowchart"
+size_flags_horizontal = 3
+horizontal_alignment = 2
+text = "File: res://example/demo_flowchart.tres"
 
 [node name="HSplitContainer" type="HSplitContainer" parent="MainVBox"]
 layout_mode = 2
