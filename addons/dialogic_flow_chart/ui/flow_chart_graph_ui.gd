@@ -109,6 +109,7 @@ func rebuild_graph() -> void:
 			var choice_info: Dictionary = choices[c_idx]
 			var c_text: String = choice_info.get("text", "")
 			var c_label: Label = Label.new()
+			c_label.name = "ChoiceSlot_" + str(c_idx)
 			c_label.text = "- " + c_text
 			c_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
 			c_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL

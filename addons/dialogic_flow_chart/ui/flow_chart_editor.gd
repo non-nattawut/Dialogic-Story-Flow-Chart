@@ -303,18 +303,20 @@ func _refresh_graph() -> void:
 			)
 
 			graph_edit.add_child(gnode)
-			gnode.set_slot(0, true, 0, Color.WHITE, true, 0, Color.GREEN)
 		else:
 			gnode.title = node_data.title
 			gnode.position_offset = node_data.position
 			var lbl: Label = gnode.get_node_or_null("HeaderHBox/PathLabel") as Label
 			if lbl != null:
 				lbl.text = node_data.timeline_path.get_file() if not node_data.timeline_path.is_empty() else "(No DTL File)"
-			gnode.set_slot(0, true, 0, Color.WHITE, true, 0, Color.GREEN)
 
-		# Clear old choice labels
+		# Clear old choice labels immediately to prevent duplicate elements
+		gnode.clear_all_slots()
+		gnode.set_slot(0, true, 0, Color.WHITE, true, 0, Color.GREEN)
+
 		for child in gnode.get_children():
-			if child.name.begins_with("ChoiceSlot_"):
+			if child != null and child.name.begins_with("ChoiceSlot_"):
+				gnode.remove_child(child)
 				child.queue_free()
 
 		# Build choice slots
