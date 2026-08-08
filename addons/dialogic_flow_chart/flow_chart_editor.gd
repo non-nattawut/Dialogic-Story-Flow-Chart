@@ -255,6 +255,7 @@ func _refresh_graph() -> void:
 		# Double click on GraphNode to switch tab directly to Dialogic
 		gnode.gui_input.connect(func(event: InputEvent):
 			if event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT and event.double_click:
+				accept_event()
 				_open_timeline_in_dialogic(node_data.timeline_path)
 		)
 
@@ -298,8 +299,11 @@ func _open_timeline_in_dialogic(dtl_path: String) -> void:
 		return
 	var res: Resource = load(dtl_path)
 	if res != null and Engine.is_editor_hint():
-		EditorInterface.set_main_screen_editor("Dialogic")
-		EditorInterface.edit_resource(res)
+		if is_inside_tree():
+			get_tree().create_timer(0.08).timeout.connect(func():
+				EditorInterface.set_main_screen_editor("Dialogic")
+				EditorInterface.edit_resource(res)
+			, CONNECT_ONE_SHOT)
 
 func _on_connection_request(from_node: StringName, from_port: int, to_node: StringName, to_port: int) -> void:
 	graph_edit.connect_node(from_node, from_port, to_node, to_port)
