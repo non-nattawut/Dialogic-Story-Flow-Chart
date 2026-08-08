@@ -7,3 +7,4 @@ hiyori (outing_blush): Where should we head today?
 	jump train_day
 - Visit the local hot spring onsen
 	jump onsen
+jump node_87437

@@ -63,6 +63,49 @@ func _ready() -> void:
 	else:
 		_do_new_chart()
 
+func _can_drop_data(_at_position: Vector2, data: Variant) -> bool:
+	if typeof(data) == TYPE_DICTIONARY and data.has("type") and data["type"] == "files":
+		var files: PackedStringArray = data.get("files", [])
+		if files.size() > 0 and files[0].ends_with(".dtl"):
+			return true
+	return false
+
+func _drop_data(at_position: Vector2, data: Variant) -> void:
+	if _can_drop_data(at_position, data):
+		var files: PackedStringArray = data.get("files", [])
+		var dtl_path: String = files[0]
+		_handle_file_dropped(at_position, dtl_path)
+
+func _handle_file_dropped(at_position: Vector2, dtl_path: String) -> void:
+	_sync_node_positions_from_graph()
+	if current_flow_chart == null:
+		_do_new_chart()
+
+	var new_id: String = "node_" + str(Time.get_ticks_msec())
+	var node: FlowChartNodeData = FlowChartNodeData.new()
+	node.node_id = new_id
+	var file_name: String = dtl_path.get_file().get_basename()
+	node.title = file_name.capitalize()
+	node.timeline_path = dtl_path
+	
+	# Calculate canvas offset relative to GraphEdit
+	var graph_pos: Vector2 = at_position
+	if graph_edit != null:
+		graph_pos = (at_position - graph_edit.position + graph_edit.scroll_offset) / graph_edit.zoom
+	node.position = graph_pos
+
+	current_flow_chart.add_node(node)
+	_refresh_graph()
+
+func _bind_timeline_to_node(node_id: String, dtl_path: String) -> void:
+	if current_flow_chart == null:
+		return
+	var node_data: FlowChartNodeData = current_flow_chart.get_node_by_id(node_id)
+	if node_data != null:
+		node_data.timeline_path = dtl_path
+		node_data.title = dtl_path.get_file().get_basename().capitalize()
+		_refresh_graph()
+
 func _setup_confirm_dialog() -> void:
 	confirm_dialog = ConfirmationDialog.new()
 	confirm_dialog.title = "Save Flow Chart Changes?"
@@ -255,6 +298,7 @@ func _refresh_graph() -> void:
 			gnode.title = node_data.title
 			gnode.position_offset = node_data.position
 			
+			# Compact node box dimensions
 			gnode.custom_minimum_size = Vector2(180, 60)
 			gnode.resizable = false
 
@@ -289,6 +333,9 @@ func _refresh_graph() -> void:
 		else:
 			gnode.title = node_data.title
 			gnode.position_offset = node_data.position
+			var lbl: Label = gnode.get_node_or_null("HeaderHBox/PathLabel") as Label
+			if lbl != null:
+				lbl.text = node_data.timeline_path.get_file() if not node_data.timeline_path.is_empty() else "(No DTL File)"
 
 	# Defer connection restoration by 1 frame to ensure scenetree queue_free & additions process fully
 	if is_inside_tree():
