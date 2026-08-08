@@ -16,14 +16,26 @@ static func save_open_editor_if_needed(path: String) -> void:
 		return
 	var main_screen: Node = EditorInterface.get_editor_main_screen()
 	var dialogic_plugin: Node = main_screen.get_node_or_null("Dialogic")
-	if dialogic_plugin != null:
-		var editors_manager: Node = dialogic_plugin.find_child("EditorsManager", true, false)
-		if editors_manager != null and "current_editor" in editors_manager and editors_manager.current_editor != null:
-			var editor: Node = editors_manager.current_editor
-			if "current_resource" in editor and editor.current_resource != null:
-				if editor.current_resource.resource_path == path:
-					if editor.has_method("_save"):
-						editor._save()
+	if dialogic_plugin == null:
+		return
+	var editors_manager: Node = dialogic_plugin.find_child("EditorsManager", true, false)
+	if editors_manager == null:
+		return
+
+	# Check all registered Dialogic editors (Timeline editor, Character editor, etc.)
+	var editors_dict: Dictionary = editors_manager.get("editors") if "editors" in editors_manager else {}
+	for key: Variant in editors_dict:
+		var editor_info: Variant = editors_dict[key]
+		var editor_node: Node = null
+		if typeof(editor_info) == TYPE_DICTIONARY:
+			editor_node = editor_info.get("node", null)
+		elif editor_info is Node:
+			editor_node = editor_info
+
+		if editor_node != null and "current_resource" in editor_node and editor_node.current_resource != null:
+			if editor_node.current_resource.resource_path == path:
+				if editor_node.has_method("_save"):
+					editor_node._save()
 
 static func force_reload_resource(path: String) -> void:
 	if path.is_empty() or not FileAccess.file_exists(path):
