@@ -7,7 +7,9 @@ A visual node-based story flowchart editor and runtime framework for **Godot Eng
 ## 🌟 Key Features
 
 - **1 Box = 1 `.dtl` Timeline Architecture**: Every node box in the flowchart represents a discrete Dialogic `.dtl` timeline file.
+- **Dynamic Choice Ports**: Choice blocks (`- Choice Text`) inside a `.dtl` file are automatically parsed into dedicated **Cyan Choice Ports** on the node box. Linking a choice port directly injects `jump target/` beneath that choice option in the `.dtl` file without needing to open Dialogic!
 - **Automatic Jump Injection & Removal**: Connecting Node A to Node B automatically appends `jump timeline_b/` (with trailing slash) to Node A's `.dtl` file. Unlinking or deleting nodes strips the corresponding `jump` line cleanly.
+- **Right-Click Connection Disconnection**: Right-click directly on any link line in the flowchart to remove connections instantly.
 - **Drag & Drop Support**: Drag any `.dtl` timeline file directly from Godot's FileSystem dock onto the flowchart canvas to create and bind a node box instantly.
 - **Double-Click Redirection**: Double-clicking any flowchart box immediately switches the main editor screen to Dialogic's Timeline Editor for fast dialogue editing.
 - **Clean Empty Timelines**: Creating a new timeline node generates a 100% clean, empty `.dtl` file without default characters or background placeholders.
