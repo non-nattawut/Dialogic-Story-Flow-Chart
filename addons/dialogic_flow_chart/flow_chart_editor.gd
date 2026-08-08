@@ -231,17 +231,26 @@ func _refresh_graph() -> void:
 		gnode.title = node_data.title
 		gnode.position_offset = node_data.position
 		
-		# Compact node box dimensions with close button
+		# Compact node box dimensions
 		gnode.custom_minimum_size = Vector2(180, 60)
 		gnode.resizable = false
-		gnode.show_close = true
-		gnode.close_request.connect(func(): _on_delete_nodes_request([gnode.name]))
+
+		var header_hbox: HBoxContainer = HBoxContainer.new()
 
 		var path_lbl: Label = Label.new()
 		var short_name: String = node_data.timeline_path.get_file() if not node_data.timeline_path.is_empty() else "(No DTL File)"
 		path_lbl.text = short_name
 		path_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-		gnode.add_child(path_lbl)
+		path_lbl.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		header_hbox.add_child(path_lbl)
+
+		var del_btn: Button = Button.new()
+		del_btn.text = "✕"
+		del_btn.flat = true
+		del_btn.pressed.connect(func(): _on_delete_nodes_request([gnode.name]))
+		header_hbox.add_child(del_btn)
+
+		gnode.add_child(header_hbox)
 
 		# Double click on GraphNode to switch tab directly to Dialogic
 		gnode.gui_input.connect(func(event: InputEvent):
