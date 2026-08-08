@@ -455,12 +455,20 @@ func _inject_jump_to_timeline(source_dtl_path: String, target_timeline_name: Str
 	var content: String = file.get_as_text()
 	file.close()
 
-	if not "jump " + target_timeline_name in content:
-		content = content.strip_edges() + "\njump " + target_timeline_name + "\n"
+	var jump_cmd: String = "jump " + target_timeline_name
+	var has_jump: bool = false
+	for line: String in content.split("\n"):
+		if line.strip_edges() == jump_cmd or line.strip_edges().begins_with(jump_cmd + " "):
+			has_jump = true
+			break
+
+	if not has_jump:
+		content = content.strip_edges() + "\n" + jump_cmd + "\n"
 		var write_file: FileAccess = FileAccess.open(source_dtl_path, FileAccess.WRITE)
 		if write_file != null:
 			write_file.store_string(content)
 			write_file.close()
+			print("Injected jump statement into ", source_dtl_path, ": ", jump_cmd)
 
 func _remove_jump_from_timeline(source_dtl_path: String, target_timeline_name: String) -> void:
 	if source_dtl_path.is_empty() or target_timeline_name.is_empty():
@@ -474,16 +482,22 @@ func _remove_jump_from_timeline(source_dtl_path: String, target_timeline_name: S
 	var content: String = file.get_as_text()
 	file.close()
 
-	var jump_line: String = "jump " + target_timeline_name
-	if jump_line in content:
-		var lines: Array = content.split("\n")
-		var new_lines: Array = []
-		for line: String in lines:
-			if line.strip_edges() != jump_line:
-				new_lines.append(line)
+	var jump_cmd: String = "jump " + target_timeline_name
+	var lines: PackedStringArray = content.split("\n")
+	var new_lines: Array = []
+	var modified: bool = false
+
+	for line: String in lines:
+		var stripped: String = line.strip_edges()
+		if stripped == jump_cmd or stripped.begins_with(jump_cmd + " ") or stripped.begins_with(jump_cmd + "/"):
+			modified = true
+		else:
+			new_lines.append(line)
+
+	if modified:
 		var new_content: String = "\n".join(new_lines)
 		var write_file: FileAccess = FileAccess.open(source_dtl_path, FileAccess.WRITE)
 		if write_file != null:
 			write_file.store_string(new_content)
 			write_file.close()
-			print("Removed jump statement from ", source_dtl_path, ": ", jump_line)
+			print("Removed jump statement from ", source_dtl_path, ": ", jump_cmd)

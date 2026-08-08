@@ -30,6 +30,7 @@ directories/dtl_directory={
 "onsen": "res://example/timelines/onsen.dtl",
 "start": "res://example/timelines/start.dtl",
 "test": "res://example/timelines/test.dtl",
+"testtttt": "res://example/timelines/testtttt.dtl",
 "train_day": "res://example/timelines/train_day.dtl",
 "train_night": "res://example/timelines/train_night.dtl"
 }
