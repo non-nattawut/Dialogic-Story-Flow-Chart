@@ -1,0 +1,6 @@
+<Empty Text Event>
+join  center
+if :
+	return
+	[wait_input]
+jump test2/

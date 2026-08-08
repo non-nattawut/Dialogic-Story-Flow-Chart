@@ -34,6 +34,11 @@ static func save_open_editor_if_needed(path: String) -> void:
 
 		if editor_node != null and "current_resource" in editor_node and editor_node.current_resource != null:
 			if editor_node.current_resource.resource_path == path:
+				# Force both DialogicEditor state and resource metadata so DialogicTimelineFormatSaver WILL save
+				if "current_resource_state" in editor_node:
+					editor_node.current_resource_state = 1 # DialogicEditor.ResourceStates.UNSAVED
+				editor_node.current_resource.set_meta("timeline_not_saved", true)
+				editor_node.current_resource.set_meta("unsaved", true)
 				if editor_node.has_method("_save"):
 					editor_node._save()
 
