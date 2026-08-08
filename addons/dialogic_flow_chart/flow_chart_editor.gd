@@ -291,11 +291,19 @@ func _on_delete_nodes_request(node_names: Array) -> void:
 
 	for node_name: Variant in node_names:
 		var id_str: String = String(node_name)
-		current_flow_chart.remove_node_by_id(id_str)
-		# Remove references in other nodes
-		for n: FlowChartNodeData in current_flow_chart.nodes:
-			if n.default_next_node_id == id_str:
-				n.default_next_node_id = ""
+		var deleted_node: FlowChartNodeData = current_flow_chart.get_node_by_id(id_str)
+		if deleted_node != null:
+			var target_name: String = deleted_node.get_timeline_name()
+			# Search for incoming jumps from previous nodes and clean them up
+			for n: FlowChartNodeData in current_flow_chart.nodes:
+				if n.default_next_node_id == id_str:
+					_remove_jump_from_timeline(n.timeline_path, target_name)
+					n.default_next_node_id = ""
+				for choice: Dictionary in n.choices:
+					if choice.get("target_node_id", "") == id_str:
+						_remove_jump_from_timeline(n.timeline_path, target_name)
+
+			current_flow_chart.remove_node_by_id(id_str)
 
 	_refresh_graph()
 
@@ -427,6 +435,11 @@ func _on_connection_request(from_node: StringName, from_port: int, to_node: Stri
 func _on_disconnection_request(from_node: StringName, from_port: int, to_node: StringName, to_port: int) -> void:
 	graph_edit.disconnect_node(from_node, from_port, to_node, to_port)
 	var from_data: FlowChartNodeData = current_flow_chart.get_node_by_id(String(from_node))
+	var to_data: FlowChartNodeData = current_flow_chart.get_node_by_id(String(to_node))
+
+	if from_data != null and to_data != null:
+		_remove_jump_from_timeline(from_data.timeline_path, to_data.get_timeline_name())
+
 	if from_data != null and from_data.default_next_node_id == String(to_node):
 		from_data.default_next_node_id = ""
 
@@ -448,3 +461,29 @@ func _inject_jump_to_timeline(source_dtl_path: String, target_timeline_name: Str
 		if write_file != null:
 			write_file.store_string(content)
 			write_file.close()
+
+func _remove_jump_from_timeline(source_dtl_path: String, target_timeline_name: String) -> void:
+	if source_dtl_path.is_empty() or target_timeline_name.is_empty():
+		return
+	if not FileAccess.file_exists(source_dtl_path):
+		return
+
+	var file: FileAccess = FileAccess.open(source_dtl_path, FileAccess.READ)
+	if file == null:
+		return
+	var content: String = file.get_as_text()
+	file.close()
+
+	var jump_line: String = "jump " + target_timeline_name
+	if jump_line in content:
+		var lines: Array = content.split("\n")
+		var new_lines: Array = []
+		for line: String in lines:
+			if line.strip_edges() != jump_line:
+				new_lines.append(line)
+		var new_content: String = "\n".join(new_lines)
+		var write_file: FileAccess = FileAccess.open(source_dtl_path, FileAccess.WRITE)
+		if write_file != null:
+			write_file.store_string(new_content)
+			write_file.close()
+			print("Removed jump statement from ", source_dtl_path, ": ", jump_line)
