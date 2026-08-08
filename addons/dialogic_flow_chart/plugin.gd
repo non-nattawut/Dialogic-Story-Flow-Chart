@@ -4,10 +4,12 @@ extends EditorPlugin
 var editor_instance: FlowChartEditor
 
 func _enter_tree() -> void:
-	editor_instance = FlowChartEditor.new()
-	editor_instance.name = "Story Flow Chart"
-	get_editor_interface().get_editor_main_screen().add_child(editor_instance)
-	_make_visible(false)
+	var scene: PackedScene = load("res://addons/dialogic_flow_chart/flow_chart_editor.tscn")
+	if scene != null:
+		editor_instance = scene.instantiate()
+		editor_instance.name = "Story Flow Chart"
+		get_editor_interface().get_editor_main_screen().add_child(editor_instance)
+		_make_visible(false)
 
 func _exit_tree() -> void:
 	if editor_instance != null:

@@ -3,78 +3,50 @@ class_name FlowChartEditor
 extends Control
 
 var current_flow_chart: FlowChartData
-var graph_edit: GraphEdit
-var inspector_panel: VBoxContainer
-
 var selected_node_data: FlowChartNodeData
+
+@onready var graph_edit: GraphEdit = $MainVBox/HSplitContainer/GraphEdit
+@onready var inspector_panel: VBoxContainer = $MainVBox/HSplitContainer/InspectorScroll/InspectorVBox
+
+@onready var btn_new: Button = $MainVBox/Toolbar/BtnNew
+@onready var btn_add_node: Button = $MainVBox/Toolbar/BtnAddNode
+@onready var btn_load_demo: Button = $MainVBox/Toolbar/BtnLoadDemo
 
 # Form Fields
 var title_field: LineEdit
 var timeline_path_field: LineEdit
 var default_next_field: LineEdit
 
-func _init() -> void:
-	anchors_preset = Control.PRESET_FULL_RECT
-
 func _ready() -> void:
-	_build_ui()
+	anchors_preset = Control.PRESET_FULL_RECT
+	size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	size_flags_vertical = Control.SIZE_EXPAND_FILL
 
-func _build_ui() -> void:
-	for child in get_children():
-		child.queue_free()
+	if btn_new != null:
+		btn_new.pressed.connect(_on_new_chart)
+	if btn_add_node != null:
+		btn_add_node.pressed.connect(_on_add_timeline_node)
+	if btn_load_demo != null:
+		btn_load_demo.pressed.connect(_on_load_demo_chart)
 
-	var main_vbox: VBoxContainer = VBoxContainer.new()
-	main_vbox.anchors_preset = Control.PRESET_FULL_RECT
-	main_vbox.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	main_vbox.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	add_child(main_vbox)
-
-	# Toolbar
-	var toolbar: HBoxContainer = HBoxContainer.new()
-	toolbar.custom_minimum_size = Vector2(0, 36)
-	main_vbox.add_child(toolbar)
-
-	var btn_new: Button = Button.new()
-	btn_new.text = "New Flow Chart"
-	btn_new.pressed.connect(_on_new_chart)
-	toolbar.add_child(btn_new)
-
-	var btn_add_node: Button = Button.new()
-	btn_add_node.text = "+ Add Timeline Box Node"
-	btn_add_node.pressed.connect(_on_add_timeline_node)
-	toolbar.add_child(btn_add_node)
-
-	# HSplit for GraphEdit and Inspector
-	var h_split: HSplitContainer = HSplitContainer.new()
-	h_split.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	h_split.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	h_split.split_offset = 680
-	main_vbox.add_child(h_split)
-
-	# Left: Graph Canvas
-	graph_edit = GraphEdit.new()
-	graph_edit.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	graph_edit.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	graph_edit.right_disconnects = true
-	graph_edit.node_selected.connect(_on_node_selected)
-	graph_edit.connection_request.connect(_on_connection_request)
-	graph_edit.disconnection_request.connect(_on_disconnection_request)
-	h_split.add_child(graph_edit)
-
-	# Right: Inspector Scroll Panel
-	var side_scroll: ScrollContainer = ScrollContainer.new()
-	side_scroll.custom_minimum_size = Vector2(320, 0)
-	side_scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	h_split.add_child(side_scroll)
-
-	inspector_panel = VBoxContainer.new()
-	inspector_panel.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	inspector_panel.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	side_scroll.add_child(inspector_panel)
+	if graph_edit != null:
+		graph_edit.node_selected.connect(_on_node_selected)
+		graph_edit.connection_request.connect(_on_connection_request)
+		graph_edit.disconnection_request.connect(_on_disconnection_request)
 
 	_build_inspector_fields()
 
+	# Auto-load demo flowchart if no chart loaded yet
+	if current_flow_chart == null:
+		_on_load_demo_chart()
+
 func _build_inspector_fields() -> void:
+	if inspector_panel == null:
+		return
+
+	for child in inspector_panel.get_children():
+		child.queue_free()
+
 	var label_heading: Label = Label.new()
 	label_heading.text = "Timeline Node Inspector"
 	label_heading.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
@@ -127,6 +99,14 @@ func _on_new_chart() -> void:
 	current_flow_chart.add_node(start_node)
 
 	_refresh_graph()
+
+func _on_load_demo_chart() -> void:
+	var demo_builder: Script = load("res://example/demo_flowchart_builder.gd")
+	if demo_builder != null and demo_builder.has_method("create_demo_chart"):
+		current_flow_chart = demo_builder.create_demo_chart()
+		_refresh_graph()
+	else:
+		_on_new_chart()
 
 func _on_add_timeline_node() -> void:
 	if current_flow_chart == null:

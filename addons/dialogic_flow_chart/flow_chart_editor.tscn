@@ -1,0 +1,62 @@
+[gd_scene load_steps=2 format=3 uid="uid://cflowcharteditor01"]
+
+[ext_resource type="Script" path="res://addons/dialogic_flow_chart/flow_chart_editor.gd" id="1_editor"]
+
+[node name="FlowChartEditor" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+script = ExtResource("1_editor")
+
+[node name="MainVBox" type="VBoxContainer" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+
+[node name="Toolbar" type="HBoxContainer" parent="MainVBox"]
+custom_minimum_size = Vector2(0, 40)
+layout_mode = 2
+
+[node name="BtnNew" type="Button" parent="MainVBox/Toolbar"]
+layout_mode = 2
+text = "New Flow Chart"
+
+[node name="BtnAddNode" type="Button" parent="MainVBox/Toolbar"]
+layout_mode = 2
+text = "+ Add Timeline Box Node"
+
+[node name="BtnLoadDemo" type="Button" parent="MainVBox/Toolbar"]
+layout_mode = 2
+text = "Load Demo Flowchart"
+
+[node name="HSplitContainer" type="HSplitContainer" parent="MainVBox"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+split_offset = 700
+
+[node name="GraphEdit" type="GraphEdit" parent="MainVBox/HSplitContainer"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+right_disconnects = true
+
+[node name="InspectorScroll" type="ScrollContainer" parent="MainVBox/HSplitContainer"]
+custom_minimum_size = Vector2(340, 0)
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="InspectorVBox" type="VBoxContainer" parent="MainVBox/HSplitContainer/InspectorScroll"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
