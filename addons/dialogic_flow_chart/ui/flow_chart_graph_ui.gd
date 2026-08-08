@@ -32,7 +32,7 @@ func _setup_graph_ui() -> void:
 	graph_edit.anchors_preset = Control.PRESET_FULL_RECT
 	graph_edit.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	graph_edit.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	graph_edit.right_disconnects = true
+	graph_edit.right_disconnects = false
 	add_child(graph_edit)
 
 func _connect_dialogic_signals() -> void:
