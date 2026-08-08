@@ -7,7 +7,8 @@
 script = ExtResource("2_node_data")
 node_id = "node_start"
 title = "1. Start Scene"
-position = Vector2(80, 140)
+position = Vector2(-20, 160)
+size = Vector2(260, 210)
 timeline_path = "res://example/timelines/start.dtl"
 choices = Array[Dictionary]([{
 "target_node_id": "node_train_day",
@@ -15,6 +16,12 @@ choices = Array[Dictionary]([{
 }, {
 "target_node_id": "node_onsen",
 "text": "Visit the local hot spring onsen"
+}, {
+"target_node_id": "",
+"text": "New Choice"
+}, {
+"target_node_id": "test 4_91331",
+"text": "test 3"
 }])
 
 [sub_resource type="Resource" id="Resource_node_train_day"]

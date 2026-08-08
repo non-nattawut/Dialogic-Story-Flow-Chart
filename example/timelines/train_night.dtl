@@ -1,4 +1,4 @@
-[background path="res://assets/background/Train_Night.png" fade="1.0"]
+[background arg="res://assets/background/Train_Night.png" fade="1.0"]
 [music path="res://assets/bgm/frozen_winter.ogg" fade="1.0"]
 join hiyori right
 hiyori (schoolsummer_tears): It got dark so quickly...
