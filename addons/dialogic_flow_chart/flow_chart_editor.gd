@@ -264,13 +264,13 @@ func _on_add_timeline_node() -> void:
 		_create_and_bind_new_dtl(default_path)
 
 func _create_and_bind_new_dtl(dtl_path: String) -> void:
-	var starter_content: String = "[background path=\"res://assets/background/Apartment_Exterior.png\" fade=\"1.0\"]\njoin hiyori center\nhiyori: New timeline scene beat.\n"
+	# Create a clean, 100% empty .dtl file without default text or portraits
 	if not FileAccess.file_exists(dtl_path):
 		var file: FileAccess = FileAccess.open(dtl_path, FileAccess.WRITE)
 		if file != null:
-			file.store_string(starter_content)
+			file.store_string("")
 			file.close()
-			print("Created new DTL timeline file: ", dtl_path)
+			print("Created clean empty DTL timeline file: ", dtl_path)
 			if Engine.is_editor_hint():
 				EditorInterface.get_resource_filesystem().scan()
 
@@ -455,20 +455,29 @@ func _inject_jump_to_timeline(source_dtl_path: String, target_timeline_name: Str
 	var content: String = file.get_as_text()
 	file.close()
 
-	var jump_cmd: String = "jump " + target_timeline_name
+	var target_clean: String = target_timeline_name.get_file().trim_suffix(".dtl")
+	var jump_cmd: String = "jump " + target_clean
+
 	var has_jump: bool = false
 	for line: String in content.split("\n"):
-		if line.strip_edges() == jump_cmd or line.strip_edges().begins_with(jump_cmd + " "):
+		var s: String = line.strip_edges()
+		if s == jump_cmd or s.begins_with(jump_cmd + " ") or s.begins_with(jump_cmd + "/") or (s.begins_with("jump ") and target_clean in s):
 			has_jump = true
 			break
 
 	if not has_jump:
-		content = content.strip_edges() + "\n" + jump_cmd + "\n"
+		content = content.strip_edges()
+		if not content.is_empty():
+			content += "\n"
+		content += jump_cmd + "\n"
+
 		var write_file: FileAccess = FileAccess.open(source_dtl_path, FileAccess.WRITE)
 		if write_file != null:
 			write_file.store_string(content)
 			write_file.close()
-			print("Injected jump statement into ", source_dtl_path, ": ", jump_cmd)
+			print("Injected jump statement into [", source_dtl_path, "]: ", jump_cmd)
+			if Engine.is_editor_hint():
+				EditorInterface.get_resource_filesystem().scan()
 
 func _remove_jump_from_timeline(source_dtl_path: String, target_timeline_name: String) -> void:
 	if source_dtl_path.is_empty() or target_timeline_name.is_empty():
@@ -482,14 +491,14 @@ func _remove_jump_from_timeline(source_dtl_path: String, target_timeline_name: S
 	var content: String = file.get_as_text()
 	file.close()
 
-	var jump_cmd: String = "jump " + target_timeline_name
+	var target_clean: String = target_timeline_name.get_file().trim_suffix(".dtl")
 	var lines: PackedStringArray = content.split("\n")
 	var new_lines: Array = []
 	var modified: bool = false
 
 	for line: String in lines:
-		var stripped: String = line.strip_edges()
-		if stripped == jump_cmd or stripped.begins_with(jump_cmd + " ") or stripped.begins_with(jump_cmd + "/"):
+		var s: String = line.strip_edges()
+		if s.begins_with("jump ") and target_clean in s:
 			modified = true
 		else:
 			new_lines.append(line)
@@ -500,4 +509,6 @@ func _remove_jump_from_timeline(source_dtl_path: String, target_timeline_name: S
 		if write_file != null:
 			write_file.store_string(new_content)
 			write_file.close()
-			print("Removed jump statement from ", source_dtl_path, ": ", jump_cmd)
+			print("Removed jump statement from [", source_dtl_path, "] pointing to: ", target_clean)
+			if Engine.is_editor_hint():
+				EditorInterface.get_resource_filesystem().scan()
