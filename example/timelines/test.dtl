@@ -1,8 +1,0 @@
-join  center
-if :
-	- 
-		jump 
-		return
-- 
-	if :
-		label
