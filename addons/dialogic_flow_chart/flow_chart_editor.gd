@@ -463,8 +463,10 @@ func _is_jump_to_target(line: String, target_timeline_name: String) -> bool:
 	if not s.begins_with("jump "):
 		return false
 	var dest: String = s.trim_prefix("jump ").strip_edges()
-	if "/" in dest and not dest.begins_with("res://"):
-		dest = dest.split("/")[0]
+	if dest.ends_with("/"):
+		dest = dest.trim_suffix("/").strip_edges()
+	elif "/" in dest and not dest.begins_with("res://"):
+		dest = dest.split("/")[0].strip_edges()
 	var dest_clean: String = dest.get_file().trim_suffix(".dtl").strip_edges()
 	return dest_clean == target_clean
 
