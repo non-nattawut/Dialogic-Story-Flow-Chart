@@ -331,16 +331,13 @@ func _refresh_graph() -> void:
 
 	_sync_node_positions_from_graph()
 
-	# 1. Sync connections from .dtl files on disk
-	_sync_jumps_from_dtl_files()
-
-	# 2. Remove nodes no longer in current_flow_chart
+	# 1. Remove nodes no longer in current_flow_chart
 	for child in graph_edit.get_children():
 		if child is GraphNode:
 			if current_flow_chart.get_node_by_id(child.name) == null:
 				child.queue_free()
 
-	# 3. Add missing nodes or update existing ones
+	# 2. Add missing nodes or update existing ones
 	for node_data: FlowChartNodeData in current_flow_chart.nodes:
 		var gnode: GraphNode = graph_edit.get_node_or_null(node_data.node_id) as GraphNode
 		if gnode == null:
@@ -401,27 +398,6 @@ func _refresh_graph() -> void:
 			var target_id: String = choice.get("target_node_id", "")
 			if not target_id.is_empty() and current_flow_chart.get_node_by_id(target_id) != null:
 				graph_edit.connect_node(node_data.node_id, 0, target_id, 0)
-
-func _sync_jumps_from_dtl_files() -> void:
-	if current_flow_chart == null:
-		return
-	for src_node: FlowChartNodeData in current_flow_chart.nodes:
-		if src_node.timeline_path.is_empty() or not FileAccess.file_exists(src_node.timeline_path):
-			continue
-		var file: FileAccess = FileAccess.open(src_node.timeline_path, FileAccess.READ)
-		if file == null:
-			continue
-		var content: String = file.get_as_text()
-		file.close()
-
-		for line: String in content.split("\n"):
-			var s: String = line.strip_edges()
-			if s.begins_with("jump "):
-				var target_name: String = s.trim_prefix("jump ").strip_edges()
-				for dest_node: FlowChartNodeData in current_flow_chart.nodes:
-					if dest_node != src_node and dest_node.get_timeline_name() == target_name.get_file().trim_suffix(".dtl"):
-						if src_node.default_next_node_id.is_empty():
-							src_node.default_next_node_id = dest_node.node_id
 
 func _on_node_selected(node: Node) -> void:
 	if current_flow_chart == null:
@@ -553,6 +529,6 @@ func _remove_jump_from_timeline(source_dtl_path: String, target_timeline_name: S
 		if write_file != null:
 			write_file.store_string(new_content)
 			write_file.close()
-			print("Removed jump from [", source_dtl_path, "] pointing to: ", target_timeline_name)
+			print("Removed jump from [", source_dtl_path, "]: ", target_timeline_name)
 			if Engine.is_editor_hint():
 				EditorInterface.get_resource_filesystem().scan()
