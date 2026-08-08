@@ -16,37 +16,31 @@ static func force_reload_resource(path: String) -> void:
 		return
 
 	if Engine.is_editor_hint():
-		# 1. Force EditorFileSystem to update status and re-import file cache immediately
+		# 1. Update FileSystem scan safely without triggering asset importer error on text files
 		var fs: EditorFileSystem = EditorInterface.get_resource_filesystem()
 		if fs != null:
 			if fs.has_method("update_file"):
 				fs.update_file(path)
-			if fs.has_method("reimport_files"):
-				fs.reimport_files([path])
-			else:
-				fs.scan()
+			fs.scan()
 
-		# 2. Invalidate Godot's in-memory Resource cache
+		# 2. Invalidate & Replace Godot's in-memory Resource cache
 		var reloaded: Resource = ResourceLoader.load(path, "", ResourceLoader.CACHE_MODE_REPLACE)
 
 		# 3. Refresh Dialogic's internal metadata index
 		DialogicResourceUtil.update_directory('.dtl')
 
-		# 4. Notify Dialogic's active EditorsManager to clear and redraw active editor tabs
+		# 4. Notify Dialogic's active EditorsManager to clear & redraw visual event blocks
 		if reloaded != null and path.ends_with(".dtl"):
 			var main_screen: Node = EditorInterface.get_editor_main_screen()
 			var dialogic_plugin: Node = main_screen.get_node_or_null("Dialogic")
 			if dialogic_plugin != null:
 				var editors_manager: Node = dialogic_plugin.find_child("EditorsManager", true, false)
-				if editors_manager != null:
-					if editors_manager.has_method("clear_editor"):
-						var editors_dict: Dictionary = editors_manager.get("editors") if "editors" in editors_manager else {}
-						var timeline_editor: Node = editors_dict.get("Timeline", {}).get("node", null)
-						if timeline_editor != null:
-							editors_manager.clear_editor(timeline_editor, true)
-							editors_manager.edit_resource(reloaded, true, true)
-					elif editors_manager.has_method("reload_current_editor"):
-						editors_manager.reload_current_editor()
+				if editors_manager != null and editors_manager.has_method("clear_editor"):
+					var editors_dict: Dictionary = editors_manager.get("editors") if "editors" in editors_manager else {}
+					var timeline_editor: Node = editors_dict.get("Timeline", {}).get("node", null)
+					if timeline_editor != null:
+						editors_manager.clear_editor(timeline_editor, true)
+						editors_manager.edit_resource(reloaded, true, true)
 			EditorInterface.edit_resource(reloaded)
 
 static func save_flowchart_silent(chart: FlowChartData, resource_path: String) -> void:

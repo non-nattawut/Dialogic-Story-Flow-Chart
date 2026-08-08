@@ -100,9 +100,8 @@ func rebuild_graph() -> void:
 		v_box.add_child(desc_label)
 
 		gnode.add_child(v_box)
-		gnode.set_slot(0, true, 0, Color.WHITE, true, 0, Color.WHITE)
-
 		graph_edit.add_child(gnode)
+		gnode.set_slot(0, true, 0, Color.WHITE, true, 0, Color.WHITE)
 
 	# Connect edges
 	for node_data: FlowChartNodeData in flow_chart.nodes:

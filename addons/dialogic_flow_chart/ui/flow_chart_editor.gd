@@ -296,8 +296,8 @@ func _refresh_graph() -> void:
 					_open_timeline_in_dialogic(node_data.timeline_path)
 			)
 
-			gnode.set_slot(0, true, 0, Color.WHITE, true, 0, Color.GREEN)
 			graph_edit.add_child(gnode)
+			gnode.set_slot(0, true, 0, Color.WHITE, true, 0, Color.GREEN)
 		else:
 			gnode.title = node_data.title
 			gnode.position_offset = node_data.position
