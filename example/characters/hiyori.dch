@@ -1,15 +1,22 @@
 {
 "@path": "res://addons/dialogic/Resources/character.gd",
-"@subpath": "",
-"color": Color(0.9, 0.4, 0.6, 1),
-"custom_info": {},
-"default_portrait": "outing_normal",
-"description": "High school student & main character",
-"display_name": "Hiyori",
-"mirror": false,
-"nicknames": [],
-"offset": Vector2(0, 0),
-"portraits": {
+"@subpath": NodePath(""),
+&"_translation_id": "",
+&"color": Color(0.9, 0.4, 0.6, 1),
+&"custom_info": {
+"prefix": "",
+"sound_mood_default": "",
+"sound_moods": {},
+"style": "",
+"suffix": ""
+},
+&"default_portrait": "outing_normal",
+&"description": "High school student & main character",
+&"display_name": "Hiyori",
+&"mirror": false,
+&"nicknames": [""],
+&"offset": Vector2(0, 0),
+&"portraits": {
 "outing_blush": {
 "export_overrides": {
 "image": "res://assets/characters/hiyori/hiyori_outing_blush.png"
@@ -83,5 +90,5 @@
 "scene": ""
 }
 },
-"scale": 1.0
+&"scale": 1.0
 }

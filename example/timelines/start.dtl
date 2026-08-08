@@ -1,0 +1,9 @@
+[background path="res://assets/background/Apartment_Exterior.png" fade="1.0"]
+[music path="res://assets/bgm/dramatic_boi.ogg" fade="1.0"]
+join hiyori center
+hiyori (outing_normal): What a nice morning outside the apartment.
+hiyori (outing_blush): Where should we head today?
+- Take the train to the seaside
+	jump train_day
+- Visit the local hot spring onsen
+	jump onsen

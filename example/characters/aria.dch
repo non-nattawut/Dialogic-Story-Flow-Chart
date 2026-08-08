@@ -1,15 +1,22 @@
 {
 "@path": "res://addons/dialogic/Resources/character.gd",
-"@subpath": "",
-"color": Color(0.3, 0.7, 0.9, 1),
-"custom_info": {},
-"default_portrait": "Happy",
-"description": "Onsen Guide",
-"display_name": "Aria",
-"mirror": false,
-"nicknames": [],
-"offset": Vector2(0, 0),
-"portraits": {
+"@subpath": NodePath(""),
+&"_translation_id": "",
+&"color": Color(0.3, 0.7, 0.9, 1),
+&"custom_info": {
+"prefix": "",
+"sound_mood_default": "",
+"sound_moods": {},
+"style": "",
+"suffix": ""
+},
+&"default_portrait": "Happy",
+&"description": "Onsen Guide",
+&"display_name": "Aria",
+&"mirror": false,
+&"nicknames": [""],
+&"offset": Vector2(0, 0),
+&"portraits": {
 "Embarrassed": {
 "export_overrides": {
 "image": "res://assets/characters/aria/Embarrassed.png"
@@ -65,5 +72,5 @@
 "scene": ""
 }
 },
-"scale": 1.0
+&"scale": 1.0
 }

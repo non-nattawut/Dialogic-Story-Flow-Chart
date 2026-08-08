@@ -1,0 +1,6 @@
+[background path="res://assets/background/Train_Day.png" fade="1.0"]
+[music path="res://assets/bgm/hope.ogg" fade="1.0"]
+join hiyori right
+hiyori (schoolsummer_happy): The seaside train is so refreshing!
+hiyori (schoolsummer_blush): I love watching the coast line go by.
+jump train_night
