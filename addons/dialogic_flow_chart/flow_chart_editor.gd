@@ -444,7 +444,8 @@ func _on_disconnection_request(from_node: StringName, from_port: int, to_node: S
 		from_data.default_next_node_id = ""
 
 func _inject_jump_to_timeline(source_dtl_path: String, target_timeline_name: String) -> void:
-	if source_dtl_path.is_empty() or target_timeline_name.is_empty():
+	var target_clean: String = target_timeline_name.get_file().trim_suffix(".dtl").strip_edges()
+	if source_dtl_path.is_empty() or target_clean.is_empty():
 		return
 	if not FileAccess.file_exists(source_dtl_path):
 		return
@@ -455,13 +456,12 @@ func _inject_jump_to_timeline(source_dtl_path: String, target_timeline_name: Str
 	var content: String = file.get_as_text()
 	file.close()
 
-	var target_clean: String = target_timeline_name.get_file().trim_suffix(".dtl")
 	var jump_cmd: String = "jump " + target_clean
 
 	var has_jump: bool = false
 	for line: String in content.split("\n"):
 		var s: String = line.strip_edges()
-		if s == jump_cmd or s.begins_with(jump_cmd + " ") or s.begins_with(jump_cmd + "/") or (s.begins_with("jump ") and target_clean in s):
+		if s == jump_cmd or s == jump_cmd + "/":
 			has_jump = true
 			break
 
@@ -480,7 +480,8 @@ func _inject_jump_to_timeline(source_dtl_path: String, target_timeline_name: Str
 				EditorInterface.get_resource_filesystem().scan()
 
 func _remove_jump_from_timeline(source_dtl_path: String, target_timeline_name: String) -> void:
-	if source_dtl_path.is_empty() or target_timeline_name.is_empty():
+	var target_clean: String = target_timeline_name.get_file().trim_suffix(".dtl").strip_edges()
+	if source_dtl_path.is_empty() or target_clean.is_empty():
 		return
 	if not FileAccess.file_exists(source_dtl_path):
 		return
@@ -491,14 +492,14 @@ func _remove_jump_from_timeline(source_dtl_path: String, target_timeline_name: S
 	var content: String = file.get_as_text()
 	file.close()
 
-	var target_clean: String = target_timeline_name.get_file().trim_suffix(".dtl")
+	var jump_cmd: String = "jump " + target_clean
 	var lines: PackedStringArray = content.split("\n")
 	var new_lines: Array = []
 	var modified: bool = false
 
 	for line: String in lines:
 		var s: String = line.strip_edges()
-		if s.begins_with("jump ") and target_clean in s:
+		if s == jump_cmd or s == jump_cmd + "/":
 			modified = true
 		else:
 			new_lines.append(line)
@@ -509,6 +510,6 @@ func _remove_jump_from_timeline(source_dtl_path: String, target_timeline_name: S
 		if write_file != null:
 			write_file.store_string(new_content)
 			write_file.close()
-			print("Removed jump statement from [", source_dtl_path, "] pointing to: ", target_clean)
+			print("Removed jump statement from [", source_dtl_path, "]: ", jump_cmd)
 			if Engine.is_editor_hint():
 				EditorInterface.get_resource_filesystem().scan()
