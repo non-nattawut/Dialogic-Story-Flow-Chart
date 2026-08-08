@@ -26,10 +26,18 @@ static func force_reload_resource(path: String) -> void:
 		# 2. Invalidate & Replace Godot's in-memory Resource cache
 		var reloaded: Resource = ResourceLoader.load(path, "", ResourceLoader.CACHE_MODE_REPLACE)
 
-		# 3. Refresh Dialogic's internal metadata index
+		# 3. If it's a DTL timeline, read raw disk text and force re-parse Dialogic timeline event objects
+		if path.ends_with(".dtl"):
+			var disk_text: String = FileAccess.get_file_as_string(path)
+			if reloaded != null and reloaded.has_method("from_text"):
+				reloaded.from_text(disk_text)
+				if reloaded.has_method("process"):
+					reloaded.process()
+
+		# 4. Refresh Dialogic's internal metadata index
 		DialogicResourceUtil.update_directory('.dtl')
 
-		# 4. Notify Dialogic's active EditorsManager to clear & redraw visual event blocks
+		# 5. Notify Dialogic's active EditorsManager to clear & redraw visual event blocks
 		if reloaded != null and path.ends_with(".dtl"):
 			var main_screen: Node = EditorInterface.get_editor_main_screen()
 			var dialogic_plugin: Node = main_screen.get_node_or_null("Dialogic")
