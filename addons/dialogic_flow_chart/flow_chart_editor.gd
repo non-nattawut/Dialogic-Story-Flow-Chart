@@ -240,51 +240,61 @@ func _refresh_graph() -> void:
 
 	_sync_node_positions_from_graph()
 
-	graph_edit.clear_connections()
+	# 1. Remove nodes no longer in current_flow_chart
 	for child in graph_edit.get_children():
 		if child is GraphNode:
-			child.queue_free()
+			if current_flow_chart.get_node_by_id(child.name) == null:
+				child.queue_free()
 
+	# 2. Add missing nodes or update existing ones
 	for node_data: FlowChartNodeData in current_flow_chart.nodes:
-		var gnode: GraphNode = GraphNode.new()
-		gnode.name = node_data.node_id
-		gnode.title = node_data.title
-		gnode.position_offset = node_data.position
-		
-		# Compact node box dimensions
-		gnode.custom_minimum_size = Vector2(180, 60)
-		gnode.resizable = false
+		var gnode: GraphNode = graph_edit.get_node_or_null(node_data.node_id) as GraphNode
+		if gnode == null:
+			gnode = GraphNode.new()
+			gnode.name = node_data.node_id
+			gnode.title = node_data.title
+			gnode.position_offset = node_data.position
+			
+			gnode.custom_minimum_size = Vector2(180, 60)
+			gnode.resizable = false
 
-		var header_hbox: HBoxContainer = HBoxContainer.new()
+			var header_hbox: HBoxContainer = HBoxContainer.new()
 
-		var path_lbl: Label = Label.new()
-		var short_name: String = node_data.timeline_path.get_file() if not node_data.timeline_path.is_empty() else "(No DTL File)"
-		path_lbl.text = short_name
-		path_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-		path_lbl.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-		header_hbox.add_child(path_lbl)
+			var path_lbl: Label = Label.new()
+			var short_name: String = node_data.timeline_path.get_file() if not node_data.timeline_path.is_empty() else "(No DTL File)"
+			path_lbl.text = short_name
+			path_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+			path_lbl.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+			header_hbox.add_child(path_lbl)
 
-		var del_btn: Button = Button.new()
-		del_btn.text = "✕"
-		del_btn.flat = true
-		del_btn.pressed.connect(func(): _on_delete_nodes_request([gnode.name]))
-		header_hbox.add_child(del_btn)
+			var del_btn: Button = Button.new()
+			del_btn.text = "✕"
+			del_btn.flat = true
+			del_btn.pressed.connect(func(): _on_delete_nodes_request([gnode.name]))
+			header_hbox.add_child(del_btn)
 
-		gnode.add_child(header_hbox)
+			gnode.add_child(header_hbox)
 
-		# Double click on GraphNode to switch tab directly to Dialogic
-		gnode.gui_input.connect(func(event: InputEvent):
-			if event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT and event.double_click:
-				accept_event()
-				_open_timeline_in_dialogic(node_data.timeline_path)
-		)
+			# Double click on GraphNode to switch tab directly to Dialogic
+			gnode.gui_input.connect(func(event: InputEvent):
+				if event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT and event.double_click:
+					accept_event()
+					_open_timeline_in_dialogic(node_data.timeline_path)
+			)
 
-		# Slot 0: Input & Output
-		gnode.set_slot(0, true, 0, Color.WHITE, true, 0, Color.GREEN)
+			# Slot 0: Input & Output
+			gnode.set_slot(0, true, 0, Color.WHITE, true, 0, Color.GREEN)
 
-		graph_edit.add_child(gnode)
+			graph_edit.add_child(gnode)
+		else:
+			gnode.title = node_data.title
+			gnode.position_offset = node_data.position
 
-	# Restore Connections
+	# Defer connection restoration by 1 frame to ensure scenetree queue_free & additions process fully
+	if is_inside_tree():
+		await get_tree().process_frame
+
+	graph_edit.clear_connections()
 	for node_data: FlowChartNodeData in current_flow_chart.nodes:
 		if not node_data.default_next_node_id.is_empty():
 			if current_flow_chart.get_node_by_id(node_data.default_next_node_id) != null:
