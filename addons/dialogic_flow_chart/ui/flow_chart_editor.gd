@@ -37,9 +37,12 @@ func _ready() -> void:
 		btn_add_node.pressed.connect(_on_add_timeline_node)
 
 	if graph_edit != null:
+		graph_edit.right_disconnects = false
 		graph_edit.node_selected.connect(_on_node_selected)
 		graph_edit.connection_request.connect(_on_connection_request)
 		graph_edit.disconnection_request.connect(_on_disconnection_request)
+		if graph_edit.has_signal("popup_request"):
+			graph_edit.popup_request.connect(_on_graph_popup_request)
 		if graph_edit.has_signal("delete_nodes_request"):
 			graph_edit.delete_nodes_request.connect(_on_delete_nodes_request)
 		if graph_edit.has_signal("end_node_move"):
@@ -367,3 +370,47 @@ func _on_disconnection_request(from_node: StringName, from_port: int, to_node: S
 func _deferred_remove_jump(from_path: String, to_name: String) -> void:
 	FlowChartFileManager.remove_jump(from_path, to_name)
 	_save_current_chart_silent()
+
+func _on_graph_popup_request(at_position: Vector2) -> void:
+	if graph_edit == null or current_flow_chart == null:
+		return
+	var graph_pos: Vector2 = (at_position + graph_edit.scroll_offset) / graph_edit.zoom
+	var conn: Dictionary = _find_connection_near_position(graph_pos)
+	if not conn.is_empty():
+		var from_node: StringName = conn.from_node
+		var from_port: int = conn.from_port
+		var to_node: StringName = conn.to_node
+		var to_port: int = conn.to_port
+		_on_disconnection_request(from_node, from_port, to_node, to_port)
+
+func _find_connection_near_position(graph_pos: Vector2, threshold: float = 30.0) -> Dictionary:
+	if graph_edit == null:
+		return {}
+
+	var connections: Array = graph_edit.get_connection_list()
+	for conn: Dictionary in connections:
+		var from_node: GraphNode = graph_edit.get_node_or_null(conn.from_node) as GraphNode
+		var to_node: GraphNode = graph_edit.get_node_or_null(conn.to_node) as GraphNode
+		if from_node == null or to_node == null:
+			continue
+
+		var p0: Vector2 = from_node.position_offset + from_node.get_output_port_position(conn.from_port)
+		var p3: Vector2 = to_node.position_offset + to_node.get_input_port_position(conn.to_port)
+
+		var cp_distance: float = abs(p3.x - p0.x) * 0.5
+		var p1: Vector2 = p0 + Vector2(cp_distance, 0)
+		var p2: Vector2 = p3 - Vector2(cp_distance, 0)
+
+		var min_dist: float = 999999.0
+		var samples: int = 24
+		for i in range(samples + 1):
+			var t: float = float(i) / float(samples)
+			var pt: Vector2 = p0.cubic_interpolate(p3, p1, p2, t)
+			var dist: float = graph_pos.distance_to(pt)
+			if dist < min_dist:
+				min_dist = dist
+
+		if min_dist <= threshold:
+			return conn
+
+	return {}
