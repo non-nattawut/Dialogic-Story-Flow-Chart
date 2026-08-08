@@ -304,6 +304,7 @@ func _refresh_graph() -> void:
 			var lbl: Label = gnode.get_node_or_null("HeaderHBox/PathLabel") as Label
 			if lbl != null:
 				lbl.text = node_data.timeline_path.get_file() if not node_data.timeline_path.is_empty() else "(No DTL File)"
+			gnode.set_slot(0, true, 0, Color.WHITE, true, 0, Color.GREEN)
 
 	if is_inside_tree():
 		await get_tree().process_frame
@@ -344,18 +345,25 @@ func _on_connection_request(from_node: StringName, from_port: int, to_node: Stri
 
 	if from_data != null and to_data != null:
 		from_data.default_next_node_id = String(to_node)
-		FlowChartFileManager.inject_jump(from_data.timeline_path, to_data.get_timeline_name())
-		_save_current_chart_silent()
+		call_deferred("_deferred_inject_jump", from_data.timeline_path, to_data.get_timeline_name())
+
+func _deferred_inject_jump(from_path: String, to_name: String) -> void:
+	FlowChartFileManager.inject_jump(from_path, to_name)
+	_save_current_chart_silent()
 
 func _on_disconnection_request(from_node: StringName, from_port: int, to_node: StringName, to_port: int) -> void:
 	graph_edit.disconnect_node(from_node, from_port, to_node, to_port)
 	var from_data: FlowChartNodeData = current_flow_chart.get_node_by_id(String(from_node))
 	var to_data: FlowChartNodeData = current_flow_chart.get_node_by_id(String(to_node))
 
-	if from_data != null and to_data != null:
-		FlowChartFileManager.remove_jump(from_data.timeline_path, to_data.get_timeline_name())
-
 	if from_data != null and from_data.default_next_node_id == String(to_node):
 		from_data.default_next_node_id = ""
 
+	if from_data != null and to_data != null:
+		call_deferred("_deferred_remove_jump", from_data.timeline_path, to_data.get_timeline_name())
+	else:
+		_save_current_chart_silent()
+
+func _deferred_remove_jump(from_path: String, to_name: String) -> void:
+	FlowChartFileManager.remove_jump(from_path, to_name)
 	_save_current_chart_silent()

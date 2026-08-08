@@ -49,25 +49,23 @@ timeline_path = "res://example/timelines/futon_night.dtl"
 
 [sub_resource type="Resource" id="Resource_8edec"]
 script = ExtResource("2_node_data")
-node_id = "test_10484"
+node_id = "test_19241"
 title = "Test"
-position = Vector2(520, 600)
+position = Vector2(420, 600)
 timeline_path = "res://example/timelines/test.dtl"
-default_next_node_id = "test2_15704"
 
 [sub_resource type="Resource" id="Resource_3xc08"]
 script = ExtResource("2_node_data")
-node_id = "test2_15704"
+node_id = "test2_23922"
 title = "Test 2"
-position = Vector2(860, 600)
+position = Vector2(660, 600)
 timeline_path = "res://example/timelines/test2.dtl"
-default_next_node_id = "test3_33183"
 
 [sub_resource type="Resource" id="Resource_j0e0m"]
 script = ExtResource("2_node_data")
-node_id = "test3_33183"
+node_id = "test3_41215"
 title = "Test 3"
-position = Vector2(1140, 620)
+position = Vector2(1080, 580)
 timeline_path = "res://example/timelines/test3.dtl"
 
 [resource]

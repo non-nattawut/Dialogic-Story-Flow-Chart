@@ -37,7 +37,7 @@ static func force_reload_resource(path: String) -> void:
 		# 4. Refresh Dialogic's internal metadata index
 		DialogicResourceUtil.update_directory('.dtl')
 
-		# 5. Notify Dialogic's active EditorsManager to clear & redraw visual event blocks
+		# 5. Notify Dialogic's active EditorsManager to redraw ONLY if the file is currently being edited in Dialogic
 		if reloaded != null and path.ends_with(".dtl"):
 			var main_screen: Node = EditorInterface.get_editor_main_screen()
 			var dialogic_plugin: Node = main_screen.get_node_or_null("Dialogic")
@@ -46,10 +46,10 @@ static func force_reload_resource(path: String) -> void:
 				if editors_manager != null and editors_manager.has_method("clear_editor"):
 					var editors_dict: Dictionary = editors_manager.get("editors") if "editors" in editors_manager else {}
 					var timeline_editor: Node = editors_dict.get("Timeline", {}).get("node", null)
-					if timeline_editor != null:
+					if timeline_editor != null and timeline_editor.get("current_resource") != null and timeline_editor.current_resource.resource_path == path:
 						editors_manager.clear_editor(timeline_editor, true)
 						editors_manager.edit_resource(reloaded, true, true)
-			EditorInterface.edit_resource(reloaded)
+						EditorInterface.edit_resource(reloaded)
 
 static func save_flowchart_silent(chart: FlowChartData, resource_path: String) -> void:
 	if chart != null and not resource_path.is_empty():
