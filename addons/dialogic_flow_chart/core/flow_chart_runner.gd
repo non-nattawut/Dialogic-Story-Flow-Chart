@@ -22,5 +22,9 @@ func start_flow_chart(chart: FlowChartData = null) -> void:
 	if ui_graph != null:
 		ui_graph.set_active_node(start_node.node_id)
 
-	# Execute starting timeline directly in Dialogic
-	Dialogic.start(start_node.timeline_path)
+	# Bypass resource cache using CACHE_MODE_REPLACE to ensure fresh disk content is executed
+	var timeline_res: Resource = ResourceLoader.load(start_node.timeline_path, "", ResourceLoader.CACHE_MODE_REPLACE)
+	if timeline_res != null:
+		Dialogic.start(timeline_res)
+	else:
+		Dialogic.start(start_node.timeline_path)

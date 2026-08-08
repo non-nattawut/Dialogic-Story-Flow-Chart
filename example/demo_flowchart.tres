@@ -16,7 +16,6 @@ choices = Array[Dictionary]([{
 "target_node_id": "node_onsen",
 "text": "Visit the local hot spring onsen"
 }])
-default_next_node_id = "test_14526"
 
 [sub_resource type="Resource" id="Resource_node_train_day"]
 script = ExtResource("2_node_data")
@@ -50,59 +49,21 @@ timeline_path = "res://example/timelines/futon_night.dtl"
 
 [sub_resource type="Resource" id="Resource_8edec"]
 script = ExtResource("2_node_data")
-node_id = "test_14526"
+node_id = "test_14170"
 title = "Test"
-position = Vector2(500, 520)
+position = Vector2(480, 520)
 timeline_path = "res://example/timelines/test.dtl"
-default_next_node_id = "test2_29440"
+default_next_node_id = "test2_20256"
 
 [sub_resource type="Resource" id="Resource_3xc08"]
 script = ExtResource("2_node_data")
-node_id = "test2_29440"
+node_id = "test2_20256"
 title = "Test 2"
-position = Vector2(900, 520)
+position = Vector2(880, 520)
 timeline_path = "res://example/timelines/test2.dtl"
-default_next_node_id = "test4_53010"
-
-[sub_resource type="Resource" id="Resource_j0e0m"]
-script = ExtResource("2_node_data")
-node_id = "test3_42653"
-title = "Test 3"
-position = Vector2(900, 720)
-timeline_path = "res://example/timelines/test3.dtl"
-default_next_node_id = "test4_53010"
-
-[sub_resource type="Resource" id="Resource_xhw5q"]
-script = ExtResource("2_node_data")
-node_id = "test4_53010"
-title = "Test 4"
-position = Vector2(1220, 600)
-timeline_path = "res://example/timelines/test4.dtl"
-
-[sub_resource type="Resource" id="Resource_l6cpn"]
-script = ExtResource("2_node_data")
-node_id = "test5_74239"
-title = "Test 5"
-position = Vector2(520, 720)
-timeline_path = "res://example/timelines/test5.dtl"
-
-[sub_resource type="Resource" id="Resource_cedqh"]
-script = ExtResource("2_node_data")
-node_id = "test6_86514"
-title = "Test 6"
-position = Vector2(120, 720)
-timeline_path = "res://example/timelines/test6.dtl"
-default_next_node_id = "test5_74239"
-
-[sub_resource type="Resource" id="Resource_8yqnl"]
-script = ExtResource("2_node_data")
-node_id = "test7_96031"
-title = "Test 7"
-position = Vector2(960, 900)
-timeline_path = "res://example/timelines/test7.dtl"
-default_next_node_id = "test4_53010"
+default_next_node_id = "node_futon_night"
 
 [resource]
 script = ExtResource("1_flowchart_data")
 start_node_id = "node_start"
-nodes = Array[ExtResource("2_node_data")]([SubResource("Resource_node_start"), SubResource("Resource_node_train_day"), SubResource("Resource_node_train_night"), SubResource("Resource_node_onsen"), SubResource("Resource_node_futon_night"), SubResource("Resource_8edec"), SubResource("Resource_3xc08"), SubResource("Resource_j0e0m"), SubResource("Resource_xhw5q"), SubResource("Resource_l6cpn"), SubResource("Resource_cedqh"), SubResource("Resource_8yqnl")])
+nodes = Array[ExtResource("2_node_data")]([SubResource("Resource_node_start"), SubResource("Resource_node_train_day"), SubResource("Resource_node_train_night"), SubResource("Resource_node_onsen"), SubResource("Resource_node_futon_night"), SubResource("Resource_8edec"), SubResource("Resource_3xc08")])
