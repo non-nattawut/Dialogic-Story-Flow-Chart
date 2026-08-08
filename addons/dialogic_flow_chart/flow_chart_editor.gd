@@ -493,13 +493,13 @@ func _inject_jump_to_timeline(source_dtl_path: String, target_timeline_name: Str
 		content = content.strip_edges()
 		if not content.is_empty():
 			content += "\n"
-		content += "jump " + target_clean + "\n"
+		content += "jump " + target_clean + "/\n"
 
 		var write_file: FileAccess = FileAccess.open(source_dtl_path, FileAccess.WRITE)
 		if write_file != null:
 			write_file.store_string(content)
 			write_file.close()
-			print("Injected jump into [", source_dtl_path, "]: jump ", target_clean)
+			print("Injected jump into [", source_dtl_path, "]: jump ", target_clean, "/")
 			if Engine.is_editor_hint():
 				EditorInterface.get_resource_filesystem().scan()
 
