@@ -389,8 +389,10 @@ func _find_connection_near_position(graph_pos: Vector2, threshold: float = 30.0)
 
 	var connections: Array = graph_edit.get_connection_list()
 	for conn: Dictionary in connections:
-		var from_node: GraphNode = graph_edit.get_node_or_null(conn.from_node) as GraphNode
-		var to_node: GraphNode = graph_edit.get_node_or_null(conn.to_node) as GraphNode
+		var from_path: NodePath = NodePath(String(conn.from_node))
+		var to_path: NodePath = NodePath(String(conn.to_node))
+		var from_node: GraphNode = graph_edit.get_node_or_null(from_path) as GraphNode
+		var to_node: GraphNode = graph_edit.get_node_or_null(to_path) as GraphNode
 		if from_node == null or to_node == null:
 			continue
 
