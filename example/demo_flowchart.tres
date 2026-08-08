@@ -49,21 +49,26 @@ timeline_path = "res://example/timelines/futon_night.dtl"
 
 [sub_resource type="Resource" id="Resource_8edec"]
 script = ExtResource("2_node_data")
-node_id = "test_14170"
+node_id = "test_10805"
 title = "Test"
-position = Vector2(480, 520)
+position = Vector2(540, 640)
 timeline_path = "res://example/timelines/test.dtl"
-default_next_node_id = "test2_20256"
 
 [sub_resource type="Resource" id="Resource_3xc08"]
 script = ExtResource("2_node_data")
-node_id = "test2_20256"
+node_id = "test2_15586"
 title = "Test 2"
-position = Vector2(880, 520)
+position = Vector2(900, 640)
 timeline_path = "res://example/timelines/test2.dtl"
-default_next_node_id = "node_futon_night"
+
+[sub_resource type="Resource" id="Resource_j0e0m"]
+script = ExtResource("2_node_data")
+node_id = "test3_27601"
+title = "Test 3"
+position = Vector2(1180, 620)
+timeline_path = "res://example/timelines/test3.dtl"
 
 [resource]
 script = ExtResource("1_flowchart_data")
 start_node_id = "node_start"
-nodes = Array[ExtResource("2_node_data")]([SubResource("Resource_node_start"), SubResource("Resource_node_train_day"), SubResource("Resource_node_train_night"), SubResource("Resource_node_onsen"), SubResource("Resource_node_futon_night"), SubResource("Resource_8edec"), SubResource("Resource_3xc08")])
+nodes = Array[ExtResource("2_node_data")]([SubResource("Resource_node_start"), SubResource("Resource_node_train_day"), SubResource("Resource_node_train_night"), SubResource("Resource_node_onsen"), SubResource("Resource_node_futon_night"), SubResource("Resource_8edec"), SubResource("Resource_3xc08"), SubResource("Resource_j0e0m")])

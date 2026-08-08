@@ -16,6 +16,8 @@ static func force_reload_resource(path: String) -> void:
 		return
 	var reloaded: Resource = ResourceLoader.load(path, "", ResourceLoader.CACHE_MODE_REPLACE)
 	if Engine.is_editor_hint():
+		# Refresh Dialogic's internal timeline directory index
+		DialogicResourceUtil.update_directory('.dtl')
 		EditorInterface.get_resource_filesystem().scan()
 		if reloaded != null and path.ends_with(".dtl"):
 			EditorInterface.edit_resource(reloaded)
