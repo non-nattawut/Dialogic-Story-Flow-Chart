@@ -13,6 +13,15 @@
 ## Core Guidelines & Synchronization Rules
 
 > [!IMPORTANT]
+> **Rule: Read Karpathy Guidelines Before Coding**
+> AI Agents MUST read and follow the [Karpathy Guidelines](file:///.agents/skills/karpathy-guidelines/SKILL.md) (`.agents/skills/karpathy-guidelines/SKILL.md`) before writing, modifying, or refactoring any code.
+> Core Principles:
+> 1. **Think Before Coding**: Explicitly state assumptions, surface tradeoffs, and clarify ambiguities before implementation.
+> 2. **Simplicity First**: Implement the minimum code needed to solve the task. Avoid over-engineering or speculative features.
+> 3. **Surgical Changes**: Touch only necessary lines. Match existing code style and clean up only self-created unused code.
+> 4. **Goal-Driven Execution**: Establish clear, verifiable success criteria and test until verified.
+
+> [!IMPORTANT]
 > **Rule: Maintain & Keep AGENTS.md in Sync**
 > AI Agents working on this project MUST keep `AGENTS.md` updated whenever significant changes occur, including:
 > 1. New features, architectural design, or new core modules added.
@@ -27,6 +36,8 @@
 ```
 dialogic-story-flow-chart/
 ├── .agents/             # Agent skills and guidelines
+│   └── skills/
+│       └── karpathy-guidelines/ # Behavioral coding guidelines
 ├── addons/
 │   └── dialogic/        # Dialogic plugin framework
 ├── project.godot        # Godot project file
@@ -55,5 +66,7 @@ dialogic-story-flow-chart/
 
 ## Instructions for Agents
 
-- **Pre-execution**: Always check current git status (`git status`) and branch state.
+- **Pre-execution**: 
+  1. Read [Karpathy Guidelines](file:///.agents/skills/karpathy-guidelines/SKILL.md) before writing or refactoring any code.
+  2. Check current git status (`git status`) and branch state.
 - **Post-execution**: Ensure code compiles/runs cleanly in Godot 4.7, update `AGENTS.md` if structure or patterns changed, stage and commit changes cleanly.
