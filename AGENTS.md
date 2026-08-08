@@ -29,6 +29,11 @@
 > 3. Changes in coding standards, GDScript guidelines, or engine configurations.
 > 4. Updates to build, workflow, or Git sync instructions.
 
+> [!IMPORTANT]
+> **Rule: File Size Limit (Max 300 Lines)**
+> AI Agents MUST keep `AGENTS.md` concise and under 300 lines.
+> If updates would cause `AGENTS.md` to exceed 300 lines, DO NOT expand this file. Recommend and extract detailed topic-specific guidelines into a new skill under `.agents/skills/<skill-name>/SKILL.md`.
+
 ---
 
 ## Project Structure
@@ -69,4 +74,4 @@ dialogic-story-flow-chart/
 - **Pre-execution**: 
   1. Read [Karpathy Guidelines](file:///.agents/skills/karpathy-guidelines/SKILL.md) before writing or refactoring any code.
   2. Check current git status (`git status`) and branch state.
-- **Post-execution**: Ensure code compiles/runs cleanly in Godot 4.7, update `AGENTS.md` if structure or patterns changed, stage and commit changes cleanly.
+- **Post-execution**: Ensure code compiles/runs cleanly in Godot 4.7, update `AGENTS.md` if structure or patterns changed (keeping it ≤ 300 lines), stage and commit changes cleanly.
