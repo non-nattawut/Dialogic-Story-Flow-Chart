@@ -107,7 +107,10 @@ func _play_node_sequence(node_data: FlowChartNodeData) -> void:
 	Dialogic.signal_event.connect(_on_dialogic_signal)
 	Dialogic.timeline_ended.connect(_on_timeline_ended)
 
-	Dialogic.start_string(dtl_text)
+	# Instantiate timeline and parse text
+	var timeline: DialogicTimeline = DialogicTimeline.new()
+	timeline.from_text(dtl_text)
+	Dialogic.start(timeline)
 
 func _on_dialogic_signal(argument: String) -> void:
 	if argument.begins_with("choice_"):

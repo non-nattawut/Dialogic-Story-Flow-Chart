@@ -1,13 +1,15 @@
-[resource]
-script = ExtResource("1_dialogic_char")
-display_name = "Hiyori"
-color = Color(0.9, 0.4, 0.6, 1)
-description = "High school student & main character"
-scale = 1.0
-offset = Vector2(0, 0)
-mirror = false
-default_portrait = "outing_normal"
-portraits = {
+{
+"@path": "res://addons/dialogic/Resources/character.gd",
+"@subpath": "",
+"color": Color(0.9, 0.4, 0.6, 1),
+"custom_info": {},
+"default_portrait": "outing_normal",
+"description": "High school student & main character",
+"display_name": "Hiyori",
+"mirror": false,
+"nicknames": [],
+"offset": Vector2(0, 0),
+"portraits": {
 "outing_blush": {
 "export_overrides": {
 "image": "res://assets/characters/hiyori/hiyori_outing_blush.png"
@@ -80,5 +82,6 @@ portraits = {
 "scale": 1.0,
 "scene": ""
 }
+},
+"scale": 1.0
 }
-custom_info = {}

@@ -1,13 +1,15 @@
-[resource]
-script = ExtResource("1_dialogic_char")
-display_name = "Aria"
-color = Color(0.3, 0.7, 0.9, 1)
-description = "Aria - Onsen Guide"
-scale = 1.0
-offset = Vector2(0, 0)
-mirror = false
-default_portrait = "Happy"
-portraits = {
+{
+"@path": "res://addons/dialogic/Resources/character.gd",
+"@subpath": "",
+"color": Color(0.3, 0.7, 0.9, 1),
+"custom_info": {},
+"default_portrait": "Happy",
+"description": "Onsen Guide",
+"display_name": "Aria",
+"mirror": false,
+"nicknames": [],
+"offset": Vector2(0, 0),
+"portraits": {
 "Embarrassed": {
 "export_overrides": {
 "image": "res://assets/characters/aria/Embarrassed.png"
@@ -62,5 +64,6 @@ portraits = {
 "scale": 1.0,
 "scene": ""
 }
+},
+"scale": 1.0
 }
-custom_info = {}
