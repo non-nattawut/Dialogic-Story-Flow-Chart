@@ -14,9 +14,11 @@ static func create_empty_dtl(dtl_path: String) -> void:
 static func force_reload_resource(path: String) -> void:
 	if path.is_empty() or not FileAccess.file_exists(path):
 		return
-	var _reloaded: Resource = ResourceLoader.load(path, "", ResourceLoader.CACHE_MODE_REPLACE)
+	var reloaded: Resource = ResourceLoader.load(path, "", ResourceLoader.CACHE_MODE_REPLACE)
 	if Engine.is_editor_hint():
 		EditorInterface.get_resource_filesystem().scan()
+		if reloaded != null and path.ends_with(".dtl"):
+			EditorInterface.edit_resource(reloaded)
 
 static func save_flowchart_silent(chart: FlowChartData, resource_path: String) -> void:
 	if chart != null and not resource_path.is_empty():
