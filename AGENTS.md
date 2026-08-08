@@ -28,6 +28,10 @@
 > 2. **Modular Architecture & Clean Directories**: Avoid monolithic scripts or flat directory dumps. Organize code into clean subdirectories (`core/`, `ui/`). Keep code files concise and under ~250-300 lines.
 
 > [!IMPORTANT]
+> **Rule: Keep README.md Updated & In Sync**
+> AI Agents working on this project MUST update and maintain `README.md` whenever core features, plugin installation procedures, node architectures, file formats, or usage APIs are added or modified.
+
+> [!IMPORTANT]
 > **Rule: Maintain & Keep AGENTS.md in Sync**
 > AI Agents working on this project MUST keep `AGENTS.md` updated whenever significant changes occur, including:
 > 1. New features, architectural design, or new core modules added.
@@ -55,11 +59,13 @@ dialogic-story-flow-chart/
 │       ├── core/        # Core Data Models & File I/O Managers
 │       │   ├── flow_chart_file_manager.gd
 │       │   ├── flow_chart_node_data.gd
-│       │   └── flow_chart_resource.gd
+│       │   ├── flow_chart_resource.gd
+│       │   └── flow_chart_runner.gd
 │       ├── ui/          # UI Controllers, Views & Inspectors
 │       │   ├── flow_chart_editor.gd
 │       │   ├── flow_chart_editor.tscn
 │       │   ├── flow_chart_graph_edit.gd
+│       │   ├── flow_chart_graph_ui.gd
 │       │   └── flow_chart_inspector_manager.gd
 │       ├── plugin.cfg   # Plugin configuration metadata
 │       └── plugin.gd    # Addon entry point script
@@ -93,4 +99,4 @@ dialogic-story-flow-chart/
 - **Pre-execution**: 
   1. Read [Karpathy Guidelines](file:///.agents/skills/karpathy-guidelines/SKILL.md) before writing or refactoring any code.
   2. Check current git status (`git status`) and branch state.
-- **Post-execution**: Ensure code compiles/runs cleanly in Godot 4.7, update `AGENTS.md` if structure or patterns changed (keeping it ≤ 300 lines), stage and commit changes cleanly.
+- **Post-execution**: Ensure code compiles/runs cleanly in Godot 4.7, update `AGENTS.md` and `README.md` if structure or patterns changed (keeping `AGENTS.md` ≤ 300 lines), stage and commit changes cleanly.

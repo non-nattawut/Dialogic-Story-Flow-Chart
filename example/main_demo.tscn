@@ -1,9 +1,9 @@
 [gd_scene format=3 uid="uid://bvsh5oqoulmoa"]
 
 [ext_resource type="Script" uid="uid://cilojtv0uh5v1" path="res://example/main_demo.gd" id="1_main_demo"]
-[ext_resource type="Script" path="res://addons/dialogic_flow_chart/ui/flow_chart_graph_ui.gd" id="2_graph_ui"]
+[ext_resource type="Script" uid="uid://vp6ku7wl4u6f" path="res://addons/dialogic_flow_chart/ui/flow_chart_graph_ui.gd" id="2_graph_ui"]
 [ext_resource type="Resource" path="res://example/demo_flowchart.tres" id="2_res"]
-[ext_resource type="Script" path="res://addons/dialogic_flow_chart/core/flow_chart_runner.gd" id="3_runner"]
+[ext_resource type="Script" uid="uid://7qq62y3d0wuv" path="res://addons/dialogic_flow_chart/core/flow_chart_runner.gd" id="3_runner"]
 
 [node name="MainDemo" type="Control" unique_id=1184540155]
 layout_mode = 3

@@ -1,7 +1,7 @@
-[gd_resource type="Resource" script_class="FlowChartData" format=3]
+[gd_resource type="Resource" script_class="FlowChartData" format=3 uid="uid://bvko51e261n8o"]
 
-[ext_resource type="Script" path="res://addons/dialogic_flow_chart/core/flow_chart_resource.gd" id="1_flowchart_data"]
-[ext_resource type="Script" path="res://addons/dialogic_flow_chart/core/flow_chart_node_data.gd" id="2_node_data"]
+[ext_resource type="Script" uid="uid://ds7u5hvdjofbj" path="res://addons/dialogic_flow_chart/core/flow_chart_resource.gd" id="1_flowchart_data"]
+[ext_resource type="Script" uid="uid://m3mn0nm3u310" path="res://addons/dialogic_flow_chart/core/flow_chart_node_data.gd" id="2_node_data"]
 
 [sub_resource type="Resource" id="Resource_node_start"]
 script = ExtResource("2_node_data")
