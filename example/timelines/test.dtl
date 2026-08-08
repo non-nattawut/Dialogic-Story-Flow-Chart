@@ -1,7 +1,0 @@
-<Empty Text Event>
-- 
-	if :
-		jump 
-		[end_timeline]
-		return
-jump test2/
