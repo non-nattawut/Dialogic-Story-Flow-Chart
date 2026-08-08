@@ -98,6 +98,7 @@ func _handle_file_dropped(at_position: Vector2, dtl_path: String) -> void:
 	node.position = graph_pos
 
 	current_flow_chart.add_node(node)
+	_save_current_chart_silent()
 	_refresh_graph()
 
 func _bind_timeline_to_node(node_id: String, dtl_path: String) -> void:
@@ -107,6 +108,7 @@ func _bind_timeline_to_node(node_id: String, dtl_path: String) -> void:
 	if node_data != null:
 		node_data.timeline_path = dtl_path
 		node_data.title = dtl_path.get_file().get_basename().capitalize()
+		_save_current_chart_silent()
 		_refresh_graph()
 
 func _setup_confirm_dialog() -> void:
@@ -156,6 +158,7 @@ func _build_inspector_fields() -> void:
 	timeline_path_field.text_changed.connect(func(val):
 		if selected_node_data:
 			selected_node_data.timeline_path = val
+			_save_current_chart_silent()
 			_refresh_graph()
 	)
 
@@ -163,6 +166,7 @@ func _build_inspector_fields() -> void:
 	default_next_field.text_changed.connect(func(val):
 		if selected_node_data:
 			selected_node_data.default_next_node_id = val
+			_save_current_chart_silent()
 	)
 
 	var btn_open_dialogic: Button = Button.new()
@@ -201,6 +205,11 @@ func _do_new_chart() -> void:
 	if current_file_label != null:
 		current_file_label.text = "File: " + current_resource_path
 	_refresh_graph()
+
+func _save_current_chart_silent() -> void:
+	if current_flow_chart != null and not current_resource_path.is_empty():
+		_sync_node_positions_from_graph()
+		ResourceSaver.save(current_flow_chart, current_resource_path)
 
 func _on_save_chart() -> void:
 	if current_flow_chart == null:
@@ -264,7 +273,6 @@ func _on_add_timeline_node() -> void:
 		_create_and_bind_new_dtl(default_path)
 
 func _create_and_bind_new_dtl(dtl_path: String) -> void:
-	# Create a clean, 100% empty .dtl file without default text or portraits
 	if not FileAccess.file_exists(dtl_path):
 		var file: FileAccess = FileAccess.open(dtl_path, FileAccess.WRITE)
 		if file != null:
@@ -281,6 +289,7 @@ func _create_and_bind_new_dtl(dtl_path: String) -> void:
 	node.timeline_path = dtl_path
 	node.position = Vector2(300, 140)
 	current_flow_chart.add_node(node)
+	_save_current_chart_silent()
 	_refresh_graph()
 
 func _on_delete_nodes_request(node_names: Array) -> void:
@@ -294,7 +303,6 @@ func _on_delete_nodes_request(node_names: Array) -> void:
 		var deleted_node: FlowChartNodeData = current_flow_chart.get_node_by_id(id_str)
 		if deleted_node != null:
 			var target_name: String = deleted_node.get_timeline_name()
-			# Search for incoming jumps from previous nodes and clean them up
 			for n: FlowChartNodeData in current_flow_chart.nodes:
 				if n.default_next_node_id == id_str:
 					_remove_jump_from_timeline(n.timeline_path, target_name)
@@ -305,6 +313,7 @@ func _on_delete_nodes_request(node_names: Array) -> void:
 
 			current_flow_chart.remove_node_by_id(id_str)
 
+	_save_current_chart_silent()
 	_refresh_graph()
 
 func _sync_node_positions_from_graph() -> void:
@@ -322,13 +331,16 @@ func _refresh_graph() -> void:
 
 	_sync_node_positions_from_graph()
 
-	# 1. Remove nodes no longer in current_flow_chart
+	# 1. Sync connections from .dtl files on disk
+	_sync_jumps_from_dtl_files()
+
+	# 2. Remove nodes no longer in current_flow_chart
 	for child in graph_edit.get_children():
 		if child is GraphNode:
 			if current_flow_chart.get_node_by_id(child.name) == null:
 				child.queue_free()
 
-	# 2. Add missing nodes or update existing ones
+	# 3. Add missing nodes or update existing ones
 	for node_data: FlowChartNodeData in current_flow_chart.nodes:
 		var gnode: GraphNode = graph_edit.get_node_or_null(node_data.node_id) as GraphNode
 		if gnode == null:
@@ -337,7 +349,6 @@ func _refresh_graph() -> void:
 			gnode.title = node_data.title
 			gnode.position_offset = node_data.position
 			
-			# Compact node box dimensions
 			gnode.custom_minimum_size = Vector2(180, 60)
 			gnode.resizable = false
 
@@ -377,7 +388,7 @@ func _refresh_graph() -> void:
 			if lbl != null:
 				lbl.text = node_data.timeline_path.get_file() if not node_data.timeline_path.is_empty() else "(No DTL File)"
 
-	# Defer connection restoration by 1 frame to ensure scenetree queue_free & additions process fully
+	# Defer connection restoration by 1 frame
 	if is_inside_tree():
 		await get_tree().process_frame
 
@@ -391,6 +402,27 @@ func _refresh_graph() -> void:
 			if not target_id.is_empty() and current_flow_chart.get_node_by_id(target_id) != null:
 				graph_edit.connect_node(node_data.node_id, 0, target_id, 0)
 
+func _sync_jumps_from_dtl_files() -> void:
+	if current_flow_chart == null:
+		return
+	for src_node: FlowChartNodeData in current_flow_chart.nodes:
+		if src_node.timeline_path.is_empty() or not FileAccess.file_exists(src_node.timeline_path):
+			continue
+		var file: FileAccess = FileAccess.open(src_node.timeline_path, FileAccess.READ)
+		if file == null:
+			continue
+		var content: String = file.get_as_text()
+		file.close()
+
+		for line: String in content.split("\n"):
+			var s: String = line.strip_edges()
+			if s.begins_with("jump "):
+				var target_name: String = s.trim_prefix("jump ").trim_suffix("/").strip_edges()
+				for dest_node: FlowChartNodeData in current_flow_chart.nodes:
+					if dest_node != src_node and dest_node.get_timeline_name() == target_name:
+						if src_node.default_next_node_id.is_empty():
+							src_node.default_next_node_id = dest_node.node_id
+
 func _on_node_selected(node: Node) -> void:
 	if current_flow_chart == null:
 		return
@@ -403,6 +435,7 @@ func _on_node_selected(node: Node) -> void:
 func _on_title_changed(new_title: String) -> void:
 	if selected_node_data != null:
 		selected_node_data.title = new_title
+		_save_current_chart_silent()
 		if graph_edit.has_node(selected_node_data.node_id):
 			var gnode: GraphNode = graph_edit.get_node(selected_node_data.node_id) as GraphNode
 			if gnode != null:
@@ -431,6 +464,7 @@ func _on_connection_request(from_node: StringName, from_port: int, to_node: Stri
 	if from_data != null and to_data != null:
 		from_data.default_next_node_id = String(to_node)
 		_inject_jump_to_timeline(from_data.timeline_path, to_data.get_timeline_name())
+		_save_current_chart_silent()
 
 func _on_disconnection_request(from_node: StringName, from_port: int, to_node: StringName, to_port: int) -> void:
 	graph_edit.disconnect_node(from_node, from_port, to_node, to_port)
@@ -442,6 +476,8 @@ func _on_disconnection_request(from_node: StringName, from_port: int, to_node: S
 
 	if from_data != null and from_data.default_next_node_id == String(to_node):
 		from_data.default_next_node_id = ""
+
+	_save_current_chart_silent()
 
 func _inject_jump_to_timeline(source_dtl_path: String, target_timeline_name: String) -> void:
 	var target_clean: String = target_timeline_name.get_file().trim_suffix(".dtl").strip_edges()
@@ -461,7 +497,7 @@ func _inject_jump_to_timeline(source_dtl_path: String, target_timeline_name: Str
 	var has_jump: bool = false
 	for line: String in content.split("\n"):
 		var s: String = line.strip_edges()
-		if s == jump_cmd or s == jump_cmd + "/":
+		if s == jump_cmd or s == jump_cmd + "/" or s.begins_with(jump_cmd + " ") or s.begins_with(jump_cmd + "\t"):
 			has_jump = true
 			break
 
@@ -475,7 +511,7 @@ func _inject_jump_to_timeline(source_dtl_path: String, target_timeline_name: Str
 		if write_file != null:
 			write_file.store_string(content)
 			write_file.close()
-			print("Injected jump statement into [", source_dtl_path, "]: ", jump_cmd)
+			print("Injected jump into [", source_dtl_path, "]: ", jump_cmd)
 			if Engine.is_editor_hint():
 				EditorInterface.get_resource_filesystem().scan()
 
@@ -499,7 +535,7 @@ func _remove_jump_from_timeline(source_dtl_path: String, target_timeline_name: S
 
 	for line: String in lines:
 		var s: String = line.strip_edges()
-		if s == jump_cmd or s == jump_cmd + "/":
+		if s == jump_cmd or s == jump_cmd + "/" or s.begins_with(jump_cmd + " ") or s.begins_with(jump_cmd + "\t"):
 			modified = true
 		else:
 			new_lines.append(line)
@@ -510,6 +546,6 @@ func _remove_jump_from_timeline(source_dtl_path: String, target_timeline_name: S
 		if write_file != null:
 			write_file.store_string(new_content)
 			write_file.close()
-			print("Removed jump statement from [", source_dtl_path, "]: ", jump_cmd)
+			print("Removed jump from [", source_dtl_path, "]: ", jump_cmd)
 			if Engine.is_editor_hint():
 				EditorInterface.get_resource_filesystem().scan()
