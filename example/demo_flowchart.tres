@@ -1,4 +1,4 @@
-[gd_resource type="Resource" script_class="FlowChartData" format=3 uid="uid://c4meqeurr6pvm"]
+[gd_resource type="Resource" script_class="FlowChartData" format=3 uid="uid://bg348gpenocjt"]
 
 [ext_resource type="Script" uid="uid://ds7u5hvdjofbj" path="res://addons/dialogic_flow_chart/core/flow_chart_resource.gd" id="1_flowchart_data"]
 [ext_resource type="Script" uid="uid://m3mn0nm3u310" path="res://addons/dialogic_flow_chart/core/flow_chart_node_data.gd" id="2_node_data"]
@@ -54,7 +54,38 @@ title = "3B. Evening Futon"
 position = Vector2(820, 240)
 timeline_path = "res://example/timelines/futon_night.dtl"
 
+[sub_resource type="Resource" id="Resource_8edec"]
+script = ExtResource("2_node_data")
+node_id = "test_21148"
+title = "Test"
+position = Vector2(40, 480)
+size = Vector2(340, 210)
+timeline_path = "res://example/timelines/test.dtl"
+choices = Array[Dictionary]([{
+"target_node_id": "",
+"text": "New Choice"
+}, {
+"target_node_id": "",
+"text": "New Choiceasdfasd"
+}, {
+"target_node_id": "",
+"text": "New Casd"
+}, {
+"target_node_id": "",
+"text": "New Choiceasd"
+}, {
+"target_node_id": "",
+"text": "New Choiceasdaa"
+}])
+
+[sub_resource type="Resource" id="Resource_3xc08"]
+script = ExtResource("2_node_data")
+node_id = "test2_24967"
+title = "Test 2"
+position = Vector2(600, 480)
+timeline_path = "res://example/timelines/test2.dtl"
+
 [resource]
 script = ExtResource("1_flowchart_data")
 start_node_id = "node_start"
-nodes = Array[ExtResource("2_node_data")]([SubResource("Resource_node_start"), SubResource("Resource_node_train_day"), SubResource("Resource_node_train_night"), SubResource("Resource_node_onsen"), SubResource("Resource_node_futon_night")])
+nodes = Array[ExtResource("2_node_data")]([SubResource("Resource_node_start"), SubResource("Resource_node_train_day"), SubResource("Resource_node_train_night"), SubResource("Resource_node_onsen"), SubResource("Resource_node_futon_night"), SubResource("Resource_8edec"), SubResource("Resource_3xc08")])

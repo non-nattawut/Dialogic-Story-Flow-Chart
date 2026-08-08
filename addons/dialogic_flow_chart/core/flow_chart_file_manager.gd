@@ -115,6 +115,7 @@ static func get_choices_from_dtl(dtl_path: String) -> Array[Dictionary]:
 
 	var lines: PackedStringArray = content.split("\n")
 	var current_choice: Dictionary = {}
+	var choice_counter: int = 0
 
 	for i in range(lines.size()):
 		var line: String = lines[i]
@@ -123,10 +124,12 @@ static func get_choices_from_dtl(dtl_path: String) -> Array[Dictionary]:
 			var text: String = s.trim_prefix("-").strip_edges()
 			current_choice = {
 				"text": text,
+				"choice_index": choice_counter,
 				"line_index": i,
 				"target_timeline": ""
 			}
 			result.append(current_choice)
+			choice_counter += 1
 		elif not current_choice.is_empty() and s.begins_with("jump "):
 			var dest: String = s.trim_prefix("jump ").strip_edges()
 			if dest.ends_with("/"):
@@ -137,13 +140,18 @@ static func get_choices_from_dtl(dtl_path: String) -> Array[Dictionary]:
 
 	return result
 
-static func add_choice_to_dtl(dtl_path: String, choice_text: String) -> void:
-	if dtl_path.is_empty() or choice_text.is_empty():
+static func add_choice_to_dtl(dtl_path: String, choice_text: String = "New Choice") -> void:
+	if dtl_path.is_empty():
 		return
 	if not FileAccess.file_exists(dtl_path):
 		create_empty_dtl(dtl_path)
 
 	save_open_editor_if_needed(dtl_path)
+
+	var existing_choices: Array[Dictionary] = get_choices_from_dtl(dtl_path)
+	var final_text: String = choice_text
+	if choice_text == "New Choice" and existing_choices.size() > 0:
+		final_text = "New Choice " + str(existing_choices.size() + 1)
 
 	var file: FileAccess = FileAccess.open(dtl_path, FileAccess.READ)
 	if file == null:
@@ -153,19 +161,17 @@ static func add_choice_to_dtl(dtl_path: String, choice_text: String) -> void:
 
 	if not content.is_empty():
 		content += "\n"
-	content += "- " + choice_text + "\n"
+	content += "- " + final_text + "\n"
 
 	var write_file: FileAccess = FileAccess.open(dtl_path, FileAccess.WRITE)
 	if write_file != null:
 		write_file.store_string(content)
 		write_file.close()
-		print("Added choice to [", dtl_path, "]: - ", choice_text)
+		print("Added choice to [", dtl_path, "]: - ", final_text)
 		force_reload_resource(dtl_path)
 
-static func rename_choice_in_dtl(dtl_path: String, old_choice_text: String, new_choice_text: String) -> void:
-	if dtl_path.is_empty() or old_choice_text.is_empty() or new_choice_text.is_empty():
-		return
-	if old_choice_text == new_choice_text:
+static func rename_choice_by_index(dtl_path: String, choice_index: int, new_choice_text: String) -> void:
+	if dtl_path.is_empty() or choice_index < 0 or new_choice_text.strip_edges().is_empty():
 		return
 	if not FileAccess.file_exists(dtl_path):
 		return
@@ -180,18 +186,19 @@ static func rename_choice_in_dtl(dtl_path: String, old_choice_text: String, new_
 
 	var lines: PackedStringArray = content.split("\n")
 	var new_lines: Array = []
+	var choice_counter: int = 0
 	var modified: bool = false
 
 	for line: String in lines:
 		var s: String = line.strip_edges()
 		if s.begins_with("- ") or s.begins_with("-\t") or s == "-":
-			var text: String = s.trim_prefix("-").strip_edges()
-			if text == old_choice_text:
+			if choice_counter == choice_index:
 				var indent: String = line.substr(0, line.length() - line.strip_edges(true, false).length())
-				new_lines.append(indent + "- " + new_choice_text)
+				new_lines.append(indent + "- " + new_choice_text.strip_edges())
 				modified = true
 			else:
 				new_lines.append(line)
+			choice_counter += 1
 		else:
 			new_lines.append(line)
 
@@ -200,11 +207,11 @@ static func rename_choice_in_dtl(dtl_path: String, old_choice_text: String, new_
 		if write_file != null:
 			write_file.store_string("\n".join(new_lines))
 			write_file.close()
-			print("Renamed choice in [", dtl_path, "]: ", old_choice_text, " -> ", new_choice_text)
+			print("Renamed choice #", choice_index, " in [", dtl_path, "] to: ", new_choice_text)
 			force_reload_resource(dtl_path)
 
-static func delete_choice_from_dtl(dtl_path: String, choice_text: String) -> void:
-	if dtl_path.is_empty() or choice_text.is_empty():
+static func delete_choice_by_index(dtl_path: String, choice_index: int) -> void:
+	if dtl_path.is_empty() or choice_index < 0:
 		return
 	if not FileAccess.file_exists(dtl_path):
 		return
@@ -219,19 +226,20 @@ static func delete_choice_from_dtl(dtl_path: String, choice_text: String) -> voi
 
 	var lines: PackedStringArray = content.split("\n")
 	var new_lines: Array = []
+	var choice_counter: int = 0
 	var inside_target_choice: bool = false
 	var modified: bool = false
 
 	for line: String in lines:
 		var s: String = line.strip_edges()
 		if s.begins_with("- ") or s.begins_with("-\t") or s == "-":
-			var text: String = s.trim_prefix("-").strip_edges()
-			if text == choice_text:
+			if choice_counter == choice_index:
 				inside_target_choice = true
 				modified = true
 			else:
 				inside_target_choice = false
 				new_lines.append(line)
+			choice_counter += 1
 		elif inside_target_choice:
 			pass
 		else:
@@ -242,7 +250,7 @@ static func delete_choice_from_dtl(dtl_path: String, choice_text: String) -> voi
 		if write_file != null:
 			write_file.store_string("\n".join(new_lines))
 			write_file.close()
-			print("Deleted choice from [", dtl_path, "]: ", choice_text)
+			print("Deleted choice #", choice_index, " from [", dtl_path, "]")
 			force_reload_resource(dtl_path)
 
 static func inject_jump(source_dtl_path: String, target_timeline_name: String) -> void:
@@ -279,9 +287,9 @@ static func inject_jump(source_dtl_path: String, target_timeline_name: String) -
 			print("Injected jump into [", source_dtl_path, "]: jump ", target_clean, "/")
 			force_reload_resource(source_dtl_path)
 
-static func inject_choice_jump(source_dtl_path: String, choice_text: String, target_timeline_name: String) -> void:
+static func inject_choice_jump_by_index(source_dtl_path: String, choice_index: int, target_timeline_name: String) -> void:
 	var target_clean: String = target_timeline_name.get_file().trim_suffix(".dtl").strip_edges()
-	if source_dtl_path.is_empty() or choice_text.is_empty() or target_clean.is_empty():
+	if source_dtl_path.is_empty() or choice_index < 0 or target_clean.is_empty():
 		return
 	if not FileAccess.file_exists(source_dtl_path):
 		return
@@ -296,6 +304,7 @@ static func inject_choice_jump(source_dtl_path: String, choice_text: String, tar
 
 	var lines: PackedStringArray = content.split("\n")
 	var new_lines: Array[String] = []
+	var choice_counter: int = 0
 	var inside_target_choice: bool = false
 	var choice_indent: String = "\t"
 	var jump_added: bool = false
@@ -305,15 +314,15 @@ static func inject_choice_jump(source_dtl_path: String, choice_text: String, tar
 		var s: String = line.strip_edges()
 
 		if s.begins_with("- ") or s.begins_with("-\t") or s == "-":
-			var text: String = s.trim_prefix("-").strip_edges()
 			if inside_target_choice and not jump_added:
 				new_lines.append(choice_indent + "jump " + target_clean + "/")
 				jump_added = true
-			inside_target_choice = (text == choice_text)
+			inside_target_choice = (choice_counter == choice_index)
 			if inside_target_choice:
 				var raw_indent: String = line.substr(0, line.length() - line.strip_edges(true, false).length())
 				choice_indent = raw_indent + "\t"
 			new_lines.append(line)
+			choice_counter += 1
 		elif inside_target_choice:
 			if s.begins_with("jump "):
 				new_lines.append(choice_indent + "jump " + target_clean + "/")
@@ -331,7 +340,7 @@ static func inject_choice_jump(source_dtl_path: String, choice_text: String, tar
 	if write_file != null:
 		write_file.store_string("\n".join(new_lines))
 		write_file.close()
-		print("Injected choice jump into [", source_dtl_path, "] choice [", choice_text, "]: jump ", target_clean, "/")
+		print("Injected choice jump into [", source_dtl_path, "] choice #", choice_index, ": jump ", target_clean, "/")
 		force_reload_resource(source_dtl_path)
 
 static func remove_jump(source_dtl_path: String, target_timeline_name: String) -> void:
@@ -367,8 +376,8 @@ static func remove_jump(source_dtl_path: String, target_timeline_name: String) -
 			print("Removed jump from [", source_dtl_path, "]: ", target_timeline_name)
 			force_reload_resource(source_dtl_path)
 
-static func remove_choice_jump(source_dtl_path: String, choice_text: String, target_timeline_name: String) -> void:
-	if source_dtl_path.is_empty() or choice_text.is_empty():
+static func remove_choice_jump_by_index(source_dtl_path: String, choice_index: int, target_timeline_name: String) -> void:
+	if source_dtl_path.is_empty() or choice_index < 0:
 		return
 	if not FileAccess.file_exists(source_dtl_path):
 		return
@@ -383,6 +392,7 @@ static func remove_choice_jump(source_dtl_path: String, choice_text: String, tar
 
 	var lines: PackedStringArray = content.split("\n")
 	var new_lines: Array = []
+	var choice_counter: int = 0
 	var inside_target_choice: bool = false
 	var modified: bool = false
 
@@ -391,9 +401,9 @@ static func remove_choice_jump(source_dtl_path: String, choice_text: String, tar
 		var s: String = line.strip_edges()
 
 		if s.begins_with("- ") or s.begins_with("-\t") or s == "-":
-			var text: String = s.trim_prefix("-").strip_edges()
-			inside_target_choice = (text == choice_text)
+			inside_target_choice = (choice_counter == choice_index)
 			new_lines.append(line)
+			choice_counter += 1
 		elif inside_target_choice and is_jump_to_target(s, target_timeline_name):
 			modified = true
 		else:
@@ -405,5 +415,5 @@ static func remove_choice_jump(source_dtl_path: String, choice_text: String, tar
 		if write_file != null:
 			write_file.store_string(new_content)
 			write_file.close()
-			print("Removed choice jump from [", source_dtl_path, "] choice [", choice_text, "]: ", target_timeline_name)
+			print("Removed choice jump from [", source_dtl_path, "] choice #", choice_index, ": ", target_timeline_name)
 			force_reload_resource(source_dtl_path)

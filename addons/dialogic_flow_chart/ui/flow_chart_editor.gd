@@ -238,10 +238,10 @@ func _on_delete_nodes_request(node_names: Array) -> void:
 				if n.default_next_node_id == id_str:
 					FlowChartFileManager.remove_jump(n.timeline_path, target_name)
 					n.default_next_node_id = ""
-				for choice: Dictionary in n.choices:
+				for choice_idx in range(n.choices.size()):
+					var choice: Dictionary = n.choices[choice_idx]
 					if choice.get("target_node_id", "") == id_str:
-						var c_text: String = choice.get("text", "")
-						FlowChartFileManager.remove_choice_jump(n.timeline_path, c_text, target_name)
+						FlowChartFileManager.remove_choice_jump_by_index(n.timeline_path, choice_idx, target_name)
 
 			current_flow_chart.remove_node_by_id(id_str)
 
@@ -354,14 +354,15 @@ func _refresh_graph() -> void:
 			line_edit.text = c_text
 			line_edit.placeholder_text = "Choice option..."
 			line_edit.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-			line_edit.flat = false # Display clean input field box outline
+			line_edit.flat = false
 			
 			var dtl_p: String = node_data.timeline_path
+			var target_c_idx: int = c_idx
 			var old_t: String = c_text
 			line_edit.text_submitted.connect(func(new_text: String):
 				var trimmed: String = new_text.strip_edges()
 				if not trimmed.is_empty() and trimmed != old_t:
-					FlowChartFileManager.rename_choice_in_dtl(dtl_p, old_t, trimmed)
+					FlowChartFileManager.rename_choice_by_index(dtl_p, target_c_idx, trimmed)
 					node_data.set_choice_target(trimmed, node_data.get_choice_target(old_t))
 					_save_current_chart_silent()
 					_refresh_graph()
@@ -369,7 +370,7 @@ func _refresh_graph() -> void:
 			line_edit.focus_exited.connect(func():
 				var trimmed: String = line_edit.text.strip_edges()
 				if not trimmed.is_empty() and trimmed != old_t:
-					FlowChartFileManager.rename_choice_in_dtl(dtl_p, old_t, trimmed)
+					FlowChartFileManager.rename_choice_by_index(dtl_p, target_c_idx, trimmed)
 					node_data.set_choice_target(trimmed, node_data.get_choice_target(old_t))
 					_save_current_chart_silent()
 					_refresh_graph()
@@ -380,7 +381,7 @@ func _refresh_graph() -> void:
 			del_choice_btn.text = "✕"
 			del_choice_btn.flat = true
 			del_choice_btn.pressed.connect(func():
-				FlowChartFileManager.delete_choice_from_dtl(dtl_p, old_t)
+				FlowChartFileManager.delete_choice_by_index(dtl_p, target_c_idx)
 				_save_current_chart_silent()
 				_refresh_graph()
 			)
@@ -402,7 +403,7 @@ func _refresh_graph() -> void:
 		add_btn.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		var target_dtl: String = node_data.timeline_path
 		add_btn.pressed.connect(func():
-			FlowChartFileManager.add_choice_to_dtl(target_dtl, "New Choice")
+			FlowChartFileManager.add_choice_to_dtl(target_dtl)
 			_save_current_chart_silent()
 			_refresh_graph()
 		)
@@ -468,16 +469,17 @@ func _on_connection_request(from_node: StringName, from_port: int, to_node: Stri
 			from_data.default_next_node_id = String(to_node)
 			call_deferred("_deferred_inject_jump", from_data.timeline_path, to_data.get_timeline_name())
 		elif from_port <= choices.size():
-			var choice_text: String = choices[from_port - 1].get("text", "")
+			var choice_idx: int = from_port - 1
+			var choice_text: String = choices[choice_idx].get("text", "")
 			from_data.set_choice_target(choice_text, String(to_node))
-			call_deferred("_deferred_inject_choice_jump", from_data.timeline_path, choice_text, to_data.get_timeline_name())
+			call_deferred("_deferred_inject_choice_jump", from_data.timeline_path, choice_idx, to_data.get_timeline_name())
 
 func _deferred_inject_jump(from_path: String, to_name: String) -> void:
 	FlowChartFileManager.inject_jump(from_path, to_name)
 	_save_current_chart_silent()
 
-func _deferred_inject_choice_jump(from_path: String, choice_text: String, to_name: String) -> void:
-	FlowChartFileManager.inject_choice_jump(from_path, choice_text, to_name)
+func _deferred_inject_choice_jump(from_path: String, choice_index: int, to_name: String) -> void:
+	FlowChartFileManager.inject_choice_jump_by_index(from_path, choice_index, to_name)
 	_save_current_chart_silent()
 
 func _on_disconnection_request(from_node: StringName, from_port: int, to_node: StringName, to_port: int) -> void:
@@ -492,9 +494,10 @@ func _on_disconnection_request(from_node: StringName, from_port: int, to_node: S
 				from_data.default_next_node_id = ""
 			call_deferred("_deferred_remove_jump", from_data.timeline_path, to_data.get_timeline_name())
 		elif from_port <= choices.size():
-			var choice_text: String = choices[from_port - 1].get("text", "")
+			var choice_idx: int = from_port - 1
+			var choice_text: String = choices[choice_idx].get("text", "")
 			from_data.set_choice_target(choice_text, "")
-			call_deferred("_deferred_remove_choice_jump", from_data.timeline_path, choice_text, to_data.get_timeline_name())
+			call_deferred("_deferred_remove_choice_jump", from_data.timeline_path, choice_idx, to_data.get_timeline_name())
 	else:
 		_save_current_chart_silent()
 
@@ -502,8 +505,8 @@ func _deferred_remove_jump(from_path: String, to_name: String) -> void:
 	FlowChartFileManager.remove_jump(from_path, to_name)
 	_save_current_chart_silent()
 
-func _deferred_remove_choice_jump(from_path: String, choice_text: String, to_name: String) -> void:
-	FlowChartFileManager.remove_choice_jump(from_path, choice_text, to_name)
+func _deferred_remove_choice_jump(from_path: String, choice_index: int, to_name: String) -> void:
+	FlowChartFileManager.remove_choice_jump_by_index(from_path, choice_index, to_name)
 	_save_current_chart_silent()
 
 func _on_graph_popup_request(at_position: Vector2) -> void:
