@@ -417,9 +417,9 @@ func _sync_jumps_from_dtl_files() -> void:
 		for line: String in content.split("\n"):
 			var s: String = line.strip_edges()
 			if s.begins_with("jump "):
-				var target_name: String = s.trim_prefix("jump ").trim_suffix("/").strip_edges()
+				var target_name: String = s.trim_prefix("jump ").strip_edges()
 				for dest_node: FlowChartNodeData in current_flow_chart.nodes:
-					if dest_node != src_node and dest_node.get_timeline_name() == target_name:
+					if dest_node != src_node and dest_node.get_timeline_name() == target_name.get_file().trim_suffix(".dtl"):
 						if src_node.default_next_node_id.is_empty():
 							src_node.default_next_node_id = dest_node.node_id
 
@@ -479,6 +479,19 @@ func _on_disconnection_request(from_node: StringName, from_port: int, to_node: S
 
 	_save_current_chart_silent()
 
+func _is_jump_to_target(line: String, target_timeline_name: String) -> bool:
+	var target_clean: String = target_timeline_name.get_file().trim_suffix(".dtl").strip_edges()
+	if target_clean.is_empty():
+		return false
+	var s: String = line.strip_edges()
+	if not s.begins_with("jump "):
+		return false
+	var dest: String = s.trim_prefix("jump ").strip_edges()
+	if "/" in dest and not dest.begins_with("res://"):
+		dest = dest.split("/")[0]
+	var dest_clean: String = dest.get_file().trim_suffix(".dtl").strip_edges()
+	return dest_clean == target_clean
+
 func _inject_jump_to_timeline(source_dtl_path: String, target_timeline_name: String) -> void:
 	var target_clean: String = target_timeline_name.get_file().trim_suffix(".dtl").strip_edges()
 	if source_dtl_path.is_empty() or target_clean.is_empty():
@@ -492,12 +505,9 @@ func _inject_jump_to_timeline(source_dtl_path: String, target_timeline_name: Str
 	var content: String = file.get_as_text()
 	file.close()
 
-	var jump_cmd: String = "jump " + target_clean
-
 	var has_jump: bool = false
 	for line: String in content.split("\n"):
-		var s: String = line.strip_edges()
-		if s == jump_cmd or s == jump_cmd + "/" or s.begins_with(jump_cmd + " ") or s.begins_with(jump_cmd + "\t"):
+		if _is_jump_to_target(line, target_clean):
 			has_jump = true
 			break
 
@@ -505,19 +515,18 @@ func _inject_jump_to_timeline(source_dtl_path: String, target_timeline_name: Str
 		content = content.strip_edges()
 		if not content.is_empty():
 			content += "\n"
-		content += jump_cmd + "\n"
+		content += "jump " + target_clean + "\n"
 
 		var write_file: FileAccess = FileAccess.open(source_dtl_path, FileAccess.WRITE)
 		if write_file != null:
 			write_file.store_string(content)
 			write_file.close()
-			print("Injected jump into [", source_dtl_path, "]: ", jump_cmd)
+			print("Injected jump into [", source_dtl_path, "]: jump ", target_clean)
 			if Engine.is_editor_hint():
 				EditorInterface.get_resource_filesystem().scan()
 
 func _remove_jump_from_timeline(source_dtl_path: String, target_timeline_name: String) -> void:
-	var target_clean: String = target_timeline_name.get_file().trim_suffix(".dtl").strip_edges()
-	if source_dtl_path.is_empty() or target_clean.is_empty():
+	if source_dtl_path.is_empty() or target_timeline_name.is_empty():
 		return
 	if not FileAccess.file_exists(source_dtl_path):
 		return
@@ -528,14 +537,12 @@ func _remove_jump_from_timeline(source_dtl_path: String, target_timeline_name: S
 	var content: String = file.get_as_text()
 	file.close()
 
-	var jump_cmd: String = "jump " + target_clean
 	var lines: PackedStringArray = content.split("\n")
 	var new_lines: Array = []
 	var modified: bool = false
 
 	for line: String in lines:
-		var s: String = line.strip_edges()
-		if s == jump_cmd or s == jump_cmd + "/" or s.begins_with(jump_cmd + " ") or s.begins_with(jump_cmd + "\t"):
+		if _is_jump_to_target(line, target_timeline_name):
 			modified = true
 		else:
 			new_lines.append(line)
@@ -546,6 +553,6 @@ func _remove_jump_from_timeline(source_dtl_path: String, target_timeline_name: S
 		if write_file != null:
 			write_file.store_string(new_content)
 			write_file.close()
-			print("Removed jump from [", source_dtl_path, "]: ", jump_cmd)
+			print("Removed jump from [", source_dtl_path, "] pointing to: ", target_timeline_name)
 			if Engine.is_editor_hint():
 				EditorInterface.get_resource_filesystem().scan()

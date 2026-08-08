@@ -29,9 +29,6 @@ directories/dtl_directory={
 "futon_night": "res://example/timelines/futon_night.dtl",
 "onsen": "res://example/timelines/onsen.dtl",
 "start": "res://example/timelines/start.dtl",
-"test": "res://example/timelines/test.dtl",
-"test2": "res://example/timelines/test2.dtl",
-"test3": "res://example/timelines/test3.dtl",
 "train_day": "res://example/timelines/train_day.dtl",
 "train_night": "res://example/timelines/train_night.dtl"
 }

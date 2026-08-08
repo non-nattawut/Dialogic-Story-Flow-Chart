@@ -16,6 +16,7 @@ choices = Array[Dictionary]([{
 "target_node_id": "node_onsen",
 "text": "Visit the local hot spring onsen"
 }])
+default_next_node_id = "node_train_day"
 
 [sub_resource type="Resource" id="Resource_node_train_day"]
 script = ExtResource("2_node_data")
@@ -47,7 +48,38 @@ title = "3B. Evening Futon"
 position = Vector2(820, 240)
 timeline_path = "res://example/timelines/futon_night.dtl"
 
+[sub_resource type="Resource" id="Resource_8edec"]
+script = ExtResource("2_node_data")
+node_id = "test_21680"
+title = "Test"
+position = Vector2(1300, 620)
+timeline_path = "res://example/timelines/test.dtl"
+
+[sub_resource type="Resource" id="Resource_3xc08"]
+script = ExtResource("2_node_data")
+node_id = "test2_26488"
+title = "Test 2"
+position = Vector2(660, 620)
+timeline_path = "res://example/timelines/test2.dtl"
+default_next_node_id = "test4_93306"
+
+[sub_resource type="Resource" id="Resource_j0e0m"]
+script = ExtResource("2_node_data")
+node_id = "test3_59998"
+title = "Test 3"
+position = Vector2(240, 620)
+timeline_path = "res://example/timelines/test3.dtl"
+default_next_node_id = "test2_26488"
+
+[sub_resource type="Resource" id="Resource_xhw5q"]
+script = ExtResource("2_node_data")
+node_id = "test4_93306"
+title = "Test 4"
+position = Vector2(1000, 620)
+timeline_path = "res://example/timelines/test4.dtl"
+default_next_node_id = "test_21680"
+
 [resource]
 script = ExtResource("1_flowchart_data")
 start_node_id = "node_start"
-nodes = Array[ExtResource("2_node_data")]([SubResource("Resource_node_start"), SubResource("Resource_node_train_day"), SubResource("Resource_node_train_night"), SubResource("Resource_node_onsen"), SubResource("Resource_node_futon_night")])
+nodes = Array[ExtResource("2_node_data")]([SubResource("Resource_node_start"), SubResource("Resource_node_train_day"), SubResource("Resource_node_train_night"), SubResource("Resource_node_onsen"), SubResource("Resource_node_futon_night"), SubResource("Resource_8edec"), SubResource("Resource_3xc08"), SubResource("Resource_j0e0m"), SubResource("Resource_xhw5q")])
