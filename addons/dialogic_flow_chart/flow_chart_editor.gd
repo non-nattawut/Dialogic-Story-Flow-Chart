@@ -206,10 +206,19 @@ func _do_new_chart() -> void:
 		current_file_label.text = "File: " + current_resource_path
 	_refresh_graph()
 
+func _force_reload_resource(path: String) -> void:
+	if path.is_empty() or not FileAccess.file_exists(path):
+		return
+	# Force Godot resource cache to replace stale in-memory cached resource with disk content
+	var _reloaded: Resource = ResourceLoader.load(path, "", ResourceLoader.CACHE_MODE_REPLACE)
+	if Engine.is_editor_hint():
+		EditorInterface.get_resource_filesystem().scan()
+
 func _save_current_chart_silent() -> void:
 	if current_flow_chart != null and not current_resource_path.is_empty():
 		_sync_node_positions_from_graph()
 		ResourceSaver.save(current_flow_chart, current_resource_path)
+		_force_reload_resource(current_resource_path)
 
 func _on_save_chart() -> void:
 	if current_flow_chart == null:
@@ -219,6 +228,7 @@ func _on_save_chart() -> void:
 		_on_save_as_file_dialog()
 		return
 	ResourceSaver.save(current_flow_chart, current_resource_path)
+	_force_reload_resource(current_resource_path)
 	print("Saved Flow Chart to: ", current_resource_path)
 	if current_file_label != null:
 		current_file_label.text = "File: " + current_resource_path
@@ -279,8 +289,7 @@ func _create_and_bind_new_dtl(dtl_path: String) -> void:
 			file.store_string("")
 			file.close()
 			print("Created clean empty DTL timeline file: ", dtl_path)
-			if Engine.is_editor_hint():
-				EditorInterface.get_resource_filesystem().scan()
+			_force_reload_resource(dtl_path)
 
 	var base_name: String = dtl_path.get_file().get_basename()
 	var node: FlowChartNodeData = FlowChartNodeData.new()
@@ -424,7 +433,8 @@ func _on_open_timeline_file() -> void:
 func _open_timeline_in_dialogic(dtl_path: String) -> void:
 	if dtl_path.is_empty() or not FileAccess.file_exists(dtl_path):
 		return
-	var res: Resource = load(dtl_path)
+	_force_reload_resource(dtl_path)
+	var res: Resource = ResourceLoader.load(dtl_path, "", ResourceLoader.CACHE_MODE_REPLACE)
 	if res != null and Engine.is_editor_hint():
 		if is_inside_tree():
 			get_tree().create_timer(0.08).timeout.connect(func():
@@ -500,8 +510,7 @@ func _inject_jump_to_timeline(source_dtl_path: String, target_timeline_name: Str
 			write_file.store_string(content)
 			write_file.close()
 			print("Injected jump into [", source_dtl_path, "]: jump ", target_clean, "/")
-			if Engine.is_editor_hint():
-				EditorInterface.get_resource_filesystem().scan()
+			_force_reload_resource(source_dtl_path)
 
 func _remove_jump_from_timeline(source_dtl_path: String, target_timeline_name: String) -> void:
 	if source_dtl_path.is_empty() or target_timeline_name.is_empty():
@@ -532,5 +541,4 @@ func _remove_jump_from_timeline(source_dtl_path: String, target_timeline_name: S
 			write_file.store_string(new_content)
 			write_file.close()
 			print("Removed jump from [", source_dtl_path, "]: ", target_timeline_name)
-			if Engine.is_editor_hint():
-				EditorInterface.get_resource_filesystem().scan()
+			_force_reload_resource(source_dtl_path)
