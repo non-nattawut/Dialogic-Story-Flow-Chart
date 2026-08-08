@@ -1,0 +1,66 @@
+[resource]
+script = ExtResource("1_dialogic_char")
+display_name = "Aria"
+color = Color(0.3, 0.7, 0.9, 1)
+description = "Aria - Onsen Guide"
+scale = 1.0
+offset = Vector2(0, 0)
+mirror = false
+default_portrait = "Happy"
+portraits = {
+"Embarrassed": {
+"export_overrides": {
+"image": "res://assets/characters/aria/Embarrassed.png"
+},
+"mirror": false,
+"offset": Vector2(0, 0),
+"scale": 1.0,
+"scene": ""
+},
+"Happy": {
+"export_overrides": {
+"image": "res://assets/characters/aria/Happy.png"
+},
+"mirror": false,
+"offset": Vector2(0, 0),
+"scale": 1.0,
+"scene": ""
+},
+"Overjoyed": {
+"export_overrides": {
+"image": "res://assets/characters/aria/Overjoyed.png"
+},
+"mirror": false,
+"offset": Vector2(0, 0),
+"scale": 1.0,
+"scene": ""
+},
+"Swooning": {
+"export_overrides": {
+"image": "res://assets/characters/aria/Swooning.png"
+},
+"mirror": false,
+"offset": Vector2(0, 0),
+"scale": 1.0,
+"scene": ""
+},
+"Upset": {
+"export_overrides": {
+"image": "res://assets/characters/aria/Upset.png"
+},
+"mirror": false,
+"offset": Vector2(0, 0),
+"scale": 1.0,
+"scene": ""
+},
+"shy": {
+"export_overrides": {
+"image": "res://assets/characters/aria/shy.png"
+},
+"mirror": false,
+"offset": Vector2(0, 0),
+"scale": 1.0,
+"scene": ""
+}
+}
+custom_info = {}

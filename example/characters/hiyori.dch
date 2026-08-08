@@ -1,0 +1,84 @@
+[resource]
+script = ExtResource("1_dialogic_char")
+display_name = "Hiyori"
+color = Color(0.9, 0.4, 0.6, 1)
+description = "High school student & main character"
+scale = 1.0
+offset = Vector2(0, 0)
+mirror = false
+default_portrait = "outing_normal"
+portraits = {
+"outing_blush": {
+"export_overrides": {
+"image": "res://assets/characters/hiyori/hiyori_outing_blush.png"
+},
+"mirror": false,
+"offset": Vector2(0, 0),
+"scale": 1.0,
+"scene": ""
+},
+"outing_happy": {
+"export_overrides": {
+"image": "res://assets/characters/hiyori/hiyori_outing_happy.png"
+},
+"mirror": false,
+"offset": Vector2(0, 0),
+"scale": 1.0,
+"scene": ""
+},
+"outing_normal": {
+"export_overrides": {
+"image": "res://assets/characters/hiyori/hiyori_outing_normal.png"
+},
+"mirror": false,
+"offset": Vector2(0, 0),
+"scale": 1.0,
+"scene": ""
+},
+"outing_tears": {
+"export_overrides": {
+"image": "res://assets/characters/hiyori/hiyori_outing_tears.png"
+},
+"mirror": false,
+"offset": Vector2(0, 0),
+"scale": 1.0,
+"scene": ""
+},
+"schoolsummer_blush": {
+"export_overrides": {
+"image": "res://assets/characters/hiyori/hiyori_schoolsummer_blush.png"
+},
+"mirror": false,
+"offset": Vector2(0, 0),
+"scale": 1.0,
+"scene": ""
+},
+"schoolsummer_happy": {
+"export_overrides": {
+"image": "res://assets/characters/hiyori/hiyori_schoolsummer_happy.png"
+},
+"mirror": false,
+"offset": Vector2(0, 0),
+"scale": 1.0,
+"scene": ""
+},
+"schoolsummer_smile": {
+"export_overrides": {
+"image": "res://assets/characters/hiyori/hiyori_schoolsummer_smile.png"
+},
+"mirror": false,
+"offset": Vector2(0, 0),
+"scale": 1.0,
+"scene": ""
+},
+"schoolsummer_tears": {
+"export_overrides": {
+"image": "res://assets/characters/hiyori/hiyori_schoolsummer_tears.png"
+},
+"mirror": false,
+"offset": Vector2(0, 0),
+"scale": 1.0,
+"scene": ""
+}
+}
+custom_info = {}
