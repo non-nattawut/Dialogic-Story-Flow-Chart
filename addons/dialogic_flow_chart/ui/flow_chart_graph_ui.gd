@@ -56,6 +56,8 @@ func _on_dialogic_timeline_started() -> void:
 
 func load_flowchart(chart: FlowChartData) -> void:
 	flow_chart = chart
+	if is_inside_tree():
+		rebuild_graph()
 
 func set_active_timeline_node(timeline_name: String) -> void:
 	if flow_chart == null:
@@ -103,6 +105,13 @@ func rebuild_graph() -> void:
 		v_box.add_child(desc_label)
 
 		gnode.add_child(v_box)
+
+		# Allow player to click on node
+		gnode.gui_input.connect(func(event: InputEvent):
+			if event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT and event.pressed:
+				node_clicked.emit(node_data.node_id)
+		)
+
 		graph_edit.add_child(gnode)
 		gnode.set_slot(0, true, 0, Color.WHITE, true, 0, Color.GREEN)
 
