@@ -1,7 +1,7 @@
-[gd_resource type="Resource" script_class="FlowChartData" load_steps=7 format=3 uid="uid://bdemoflowcharttres01"]
+[gd_resource type="Resource" script_class="FlowChartData" format=3 uid="uid://bsss2pb6uvvua"]
 
-[ext_resource type="Script" path="res://addons/dialogic_flow_chart/flow_chart_resource.gd" id="1_flowchart_data"]
-[ext_resource type="Script" path="res://addons/dialogic_flow_chart/flow_chart_node_data.gd" id="2_node_data"]
+[ext_resource type="Script" uid="uid://ds7u5hvdjofbj" path="res://addons/dialogic_flow_chart/flow_chart_resource.gd" id="1_flowchart_data"]
+[ext_resource type="Script" uid="uid://m3mn0nm3u310" path="res://addons/dialogic_flow_chart/flow_chart_node_data.gd" id="2_node_data"]
 
 [sub_resource type="Resource" id="Resource_node_start"]
 script = ExtResource("2_node_data")
@@ -9,14 +9,13 @@ node_id = "node_start"
 title = "1. Start Scene"
 position = Vector2(80, 140)
 timeline_path = "res://example/timelines/start.dtl"
-choices = [{
+choices = Array[Dictionary]([{
 "target_node_id": "node_train_day",
 "text": "Take the train to the seaside"
 }, {
 "target_node_id": "node_onsen",
 "text": "Visit the local hot spring onsen"
-}]
-default_next_node_id = ""
+}])
 
 [sub_resource type="Resource" id="Resource_node_train_day"]
 script = ExtResource("2_node_data")
@@ -24,7 +23,6 @@ node_id = "node_train_day"
 title = "2A. Train Journey"
 position = Vector2(460, 60)
 timeline_path = "res://example/timelines/train_day.dtl"
-choices = []
 default_next_node_id = "node_train_night"
 
 [sub_resource type="Resource" id="Resource_node_train_night"]
@@ -33,8 +31,6 @@ node_id = "node_train_night"
 title = "3A. Night Return"
 position = Vector2(820, 60)
 timeline_path = "res://example/timelines/train_night.dtl"
-choices = []
-default_next_node_id = ""
 
 [sub_resource type="Resource" id="Resource_node_onsen"]
 script = ExtResource("2_node_data")
@@ -42,7 +38,6 @@ node_id = "node_onsen"
 title = "2B. Onsen Springs"
 position = Vector2(460, 240)
 timeline_path = "res://example/timelines/onsen.dtl"
-choices = []
 default_next_node_id = "node_futon_night"
 
 [sub_resource type="Resource" id="Resource_node_futon_night"]
@@ -51,8 +46,6 @@ node_id = "node_futon_night"
 title = "3B. Evening Futon"
 position = Vector2(820, 240)
 timeline_path = "res://example/timelines/futon_night.dtl"
-choices = []
-default_next_node_id = ""
 
 [resource]
 script = ExtResource("1_flowchart_data")

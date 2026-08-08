@@ -22,6 +22,8 @@ var timeline_path_field: LineEdit
 var default_next_field: LineEdit
 
 var file_dialog: EditorFileDialog
+var confirm_dialog: ConfirmationDialog
+var pending_action: Callable
 
 func _ready() -> void:
 	anchors_preset = Control.PRESET_FULL_RECT
@@ -29,9 +31,9 @@ func _ready() -> void:
 	size_flags_vertical = Control.SIZE_EXPAND_FILL
 
 	if btn_new != null:
-		btn_new.pressed.connect(_on_new_chart)
+		btn_new.pressed.connect(func(): _confirm_unsaved_changes(_do_new_chart))
 	if btn_open != null:
-		btn_open.pressed.connect(_on_open_file_dialog)
+		btn_open.pressed.connect(func(): _confirm_unsaved_changes(_on_open_file_dialog))
 	if btn_save != null:
 		btn_save.pressed.connect(_on_save_chart)
 	if btn_save_as != null:
@@ -43,8 +45,11 @@ func _ready() -> void:
 		graph_edit.node_selected.connect(_on_node_selected)
 		graph_edit.connection_request.connect(_on_connection_request)
 		graph_edit.disconnection_request.connect(_on_disconnection_request)
+		if graph_edit.has_signal("delete_nodes_request"):
+			graph_edit.delete_nodes_request.connect(_on_delete_nodes_request)
 
 	_build_inspector_fields()
+	_setup_confirm_dialog()
 
 	# Auto-load existing demo flowchart
 	if FileAccess.file_exists(current_resource_path):
@@ -52,9 +57,35 @@ func _ready() -> void:
 		if res != null:
 			load_flow_chart(res, current_resource_path)
 		else:
-			_on_new_chart()
+			_do_new_chart()
 	else:
-		_on_new_chart()
+		_do_new_chart()
+
+func _setup_confirm_dialog() -> void:
+	confirm_dialog = ConfirmationDialog.new()
+	confirm_dialog.title = "Save Flow Chart Changes?"
+	confirm_dialog.dialog_text = "Do you want to save changes to the current flowchart before proceeding?"
+	confirm_dialog.ok_button_text = "Save"
+	confirm_dialog.add_cancel_button("Don't Save")
+	
+	confirm_dialog.confirmed.connect(func():
+		_on_save_chart()
+		if pending_action.is_valid():
+			pending_action.call()
+	)
+	confirm_dialog.custom_action.connect(func(action):
+		if action == "Don't Save" and pending_action.is_valid():
+			confirm_dialog.hide()
+			pending_action.call()
+	)
+	add_child(confirm_dialog)
+
+func _confirm_unsaved_changes(action: Callable) -> void:
+	pending_action = action
+	if confirm_dialog != null:
+		confirm_dialog.popup_centered()
+	else:
+		action.call()
 
 func _build_inspector_fields() -> void:
 	if inspector_panel == null:
@@ -87,7 +118,7 @@ func _build_inspector_fields() -> void:
 	)
 
 	var btn_open_dialogic: Button = Button.new()
-	btn_open_dialogic.text = "Open Timeline File"
+	btn_open_dialogic.text = "Open Timeline in Dialogic Editor"
 	btn_open_dialogic.pressed.connect(_on_open_timeline_file)
 	inspector_panel.add_child(btn_open_dialogic)
 
@@ -107,7 +138,7 @@ func load_flow_chart(chart: FlowChartData, path: String = "") -> void:
 		current_file_label.text = "File: " + current_resource_path
 	_refresh_graph()
 
-func _on_new_chart() -> void:
+func _do_new_chart() -> void:
 	current_flow_chart = FlowChartData.new()
 	current_flow_chart.start_node_id = "start"
 
@@ -163,7 +194,7 @@ func _on_open_file_dialog() -> void:
 
 func _on_add_timeline_node() -> void:
 	if current_flow_chart == null:
-		_on_new_chart()
+		_do_new_chart()
 
 	var new_id: String = "node_" + str(Time.get_ticks_msec())
 	var node: FlowChartNodeData = FlowChartNodeData.new()
@@ -171,6 +202,18 @@ func _on_add_timeline_node() -> void:
 	node.title = "New Timeline Box"
 	node.position = Vector2(300, 140)
 	current_flow_chart.add_node(node)
+	_refresh_graph()
+
+func _on_delete_nodes_request(node_names: Array) -> void:
+	if current_flow_chart == null:
+		return
+
+	for node_name: Variant in node_names:
+		var id_str: String = String(node_name)
+		current_flow_chart.remove_node_by_id(id_str)
+		if graph_edit.has_node(id_str):
+			graph_edit.get_node(id_str).queue_free()
+
 	_refresh_graph()
 
 func _refresh_graph() -> void:
@@ -188,15 +231,23 @@ func _refresh_graph() -> void:
 		gnode.title = node_data.title
 		gnode.position_offset = node_data.position
 		
-		# Sleek, compact node box dimensions
+		# Compact node box dimensions with close button
 		gnode.custom_minimum_size = Vector2(180, 60)
 		gnode.resizable = false
+		gnode.show_close = true
+		gnode.close_request.connect(func(): _on_delete_nodes_request([gnode.name]))
 
 		var path_lbl: Label = Label.new()
 		var short_name: String = node_data.timeline_path.get_file() if not node_data.timeline_path.is_empty() else "(No DTL File)"
 		path_lbl.text = short_name
 		path_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 		gnode.add_child(path_lbl)
+
+		# Double click on GraphNode to switch tab directly to Dialogic
+		gnode.gui_input.connect(func(event: InputEvent):
+			if event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT and event.double_click:
+				_open_timeline_in_dialogic(node_data.timeline_path)
+		)
 
 		# Slot 0: Input & Output
 		gnode.set_slot(0, true, 0, Color.WHITE, true, 0, Color.GREEN)
@@ -231,9 +282,15 @@ func _on_title_changed(new_title: String) -> void:
 
 func _on_open_timeline_file() -> void:
 	if selected_node_data != null and not selected_node_data.timeline_path.is_empty():
-		var res: Resource = load(selected_node_data.timeline_path)
-		if res != null and Engine.is_editor_hint():
-			EditorInterface.edit_resource(res)
+		_open_timeline_in_dialogic(selected_node_data.timeline_path)
+
+func _open_timeline_in_dialogic(dtl_path: String) -> void:
+	if dtl_path.is_empty() or not FileAccess.file_exists(dtl_path):
+		return
+	var res: Resource = load(dtl_path)
+	if res != null and Engine.is_editor_hint():
+		EditorInterface.set_main_screen_editor("Dialogic")
+		EditorInterface.edit_resource(res)
 
 func _on_connection_request(from_node: StringName, from_port: int, to_node: StringName, to_port: int) -> void:
 	graph_edit.connect_node(from_node, from_port, to_node, to_port)
